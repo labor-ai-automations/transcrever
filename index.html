@@ -3,17 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Processador Avançado de Áudio | Labor AI</title>
-    
-    <!-- Habilitar Cross-Origin Isolation para FFmpeg.wasm -->
-    <meta name="Cross-Origin-Opener-Policy" content="same-origin">
-    <meta name="Cross-Origin-Embedder-Policy" content="require-corp">
-
+    <title>Transcritor Inteligente | Labor AI</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Fira+Code&display=swap" rel="stylesheet">
-    
-    <!-- FFmpeg.wasm - Carregado de forma assíncrona -->
-    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.min.js" defer></script>
-    <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/util.min.js" defer></script>
     
     <style>
         :root {
@@ -46,42 +37,46 @@
             border-radius: 16px;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
             width: 100%;
-            max-width: 800px;
+            max-width: 700px;
             text-align: center;
             padding: 40px;
         }
 
+        .header { margin-bottom: 32px; }
         .header h1 { font-size: 32px; font-weight: 700; }
-        .header p { font-size: 18px; color: var(--text-secondary); margin-top: 8px; margin-bottom: 32px; }
+        .header p { font-size: 18px; color: var(--text-secondary); margin-top: 8px; }
 
         #drop-area { border: 2px dashed var(--border-color); border-radius: 12px; padding: 48px; cursor: pointer; transition: all 0.2s ease; }
         #drop-area:hover, #drop-area.dragover { border-color: var(--primary-color); background-color: #f0fdfa; }
 
-        #files-list-container { margin-top: 24px; text-align: left; }
-        #files-list { list-style: none; }
-        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background-color: #f9fafb; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 8px; cursor: grab; }
-        .file-item:active { cursor: grabbing; background-color: #f0fdfa; }
-        .remove-file-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 20px; }
+        #file-name { margin-top: 16px; font-weight: 500; color: var(--primary-color); }
 
         .task-options { margin-top: 24px; text-align: left; }
-        .task-option label { margin-left: 8px; }
+        .task-option { padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; }
+        .task-option input[type="radio"] { margin-right: 12px; }
+        .task-option.selected { border-color: var(--primary-color); background-color: #f0fdfa; }
+        
+        #email-section { margin-top: 16px; display: none; text-align: left; }
+        #email-section label { display: block; margin-bottom: 8px; font-weight: 500; }
+        #email-input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; }
 
-        #process-button { width: 100%; padding: 16px; margin-top: 24px; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; }
-        #process-button:disabled { background-color: #a5b0b8; cursor: not-allowed; }
+        #submit-button { width: 100%; padding: 16px; margin-top: 24px; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; }
+        #submit-button:disabled { background-color: #a5b0b8; cursor: not-allowed; }
 
-        #processing-stage .spinner { width: 48px; height: 48px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 24px auto; }
+        #processing-stage .spinner { width: 48px; height: 48px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #status-text { margin-top: 24px; font-weight: 500; color: var(--text-secondary); }
 
         #result-stage { text-align: left; }
-        .tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 24px; }
-        .tab { padding: 12px 20px; cursor: pointer; border-bottom: 3px solid transparent; }
-        .tab.active { border-bottom-color: var(--primary-color); color: var(--primary-color); font-weight: 700; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
         #result-text { width: 100%; height: 350px; padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; font-family: 'Fira Code', monospace; line-height: 1.7; resize: vertical; }
         .result-actions { margin-top: 16px; display: flex; gap: 16px; }
-        
+
+        #confirmation-section { text-align: center; padding: 40px; background-color: #f0fdfa; border-radius: 12px; }
+
+        .button { flex-grow: 1; padding: 12px; font-size: 15px; font-weight: 500; border-radius: 8px; border: none; cursor: pointer; }
+        .btn-copy { background-color: var(--success-color); color: white; }
+        .btn-reset { background-color: var(--text-secondary); color: white; }
+
         .footer { margin-top: 40px; font-size: 14px; color: var(--text-secondary); }
         .hidden { display: none; }
     </style>
@@ -90,105 +85,90 @@
 
     <div class="container">
         <header class="header">
-            <h1>Processador Avançado de Áudio</h1>
-            <p>Una, comprima e extraia insights com a IA da Labor AI.</p>
+            <h1>Transcritor Inteligente</h1>
+            <p>Envie seu áudio e deixe a IA da Labor AI fazer o trabalho pesado.</p>
         </header>
 
         <!-- ETAPA 1: UPLOAD E CONFIGURAÇÃO -->
-        <div id="setup-stage">
-            <input type="file" id="file-input" class="hidden" accept="audio/*" multiple>
+        <div id="upload-stage">
+            <input type="file" id="file-input" class="hidden" accept="audio/*">
             <div id="drop-area">
-                <p>Arraste e solte seus áudios aqui ou clique para selecionar</p>
-                <small>Selecione múltiplos arquivos para uni-los automaticamente</small>
+                <p>Arraste e solte seu áudio aqui ou clique para selecionar</p>
+                <small>Formatos: MP3, M4A, OGG, WAV, etc.</small>
             </div>
-            
-            <div id="files-list-container" class="hidden">
-                <h4>Arquivos para Processar (arraste para reordenar):</h4>
-                <ul id="files-list"></ul>
-            </div>
+            <p id="file-name" class="hidden"></p>
 
             <div id="task-options" class="task-options hidden">
-                <h4>Ações Desejadas:</h4>
-                <div class="task-option">
-                    <input type="checkbox" id="task-transcribe" name="tasks" value="transcribe" checked>
-                    <label for="task-transcribe">Transcrição Completa</label>
+                <h4>1. Escolha a ação:</h4>
+                <div class="task-option" data-task="transcribe">
+                    <input type="radio" name="task" value="transcribe" id="task_simple">
+                    <label for="task_simple">Apenas Transcrever</label>
                 </div>
-                <div class="task-option">
-                    <input type="checkbox" id="task-bullets" name="tasks" value="bullets">
-                    <label for="task-bullets">Gerar Pontos Chave (Bullet Points)</label>
-                </div>
-                <div class="task-option">
-                    <input type="checkbox" id="task-summary" name="tasks" value="summary">
-                    <label for="task-summary">Criar Resumo Executivo</label>
+                <div class="task-option" data-task="summary">
+                    <input type="radio" name="task" value="summary" id="task_summary">
+                    <label for="task_summary">Gerar Resumo por IA (Enviado por E-mail)</label>
                 </div>
             </div>
 
-            <button id="process-button" disabled>Carregando motor de áudio...</button>
+            <div id="email-section" class="hidden">
+                <h4>2. Informe seu e-mail para receber o resumo:</h4>
+                <input type="email" id="email-input" placeholder="seu@email.com">
+            </div>
+
+            <button id="submit-button" disabled>Selecione um arquivo</button>
         </div>
 
         <!-- ETAPA 2: PROCESSANDO -->
         <div id="processing-stage" class="hidden">
             <div class="spinner"></div>
-            <p id="status-text">Iniciando...</p>
+            <p id="status-text">Processando...</p>
         </div>
 
-        <!-- ETAPA 3: RESULTADO -->
+        <!-- ETAPA 3: RESULTADOS -->
         <div id="result-stage" class="hidden">
-            <h3>Resultados do Processamento</h3>
-            <div class="tabs" id="result-tabs"></div>
-            <div id="result-contents"></div>
+            <h3>Transcrição Completa</h3>
+            <textarea id="result-text" readonly></textarea>
             <div class="result-actions">
-                <button id="reset-button">Processar Outro</button>
+                <button id="copy-button" class="button btn-copy">Copiar Texto</button>
+                <button id="reset-button" class="button btn-reset">Processar Outro</button>
             </div>
         </div>
+
+        <div id="confirmation-section" class="hidden">
+            <h3>Sucesso!</h3>
+            <p>Seu pedido foi recebido. O resumo será gerado e enviado para o e-mail informado em breve.</p>
+            <button id="reset-button-2" class="button btn-reset" style="margin-top: 20px;">Processar Outro</button>
+        </div>
+
     </div>
 
-    <footer class="footer">Desenvolvido pela Labor AI</footer>
+    <footer class="footer">
+        Desenvolvido pela Labor AI
+    </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Configurações
             const webhookUrl = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/a7afa173-d939-46f8-80d7-0e2a9845c928';
 
-            // Elementos DOM
-            const setupStage = document.getElementById('setup-stage');
+            // Seletores
+            const uploadStage = document.getElementById('upload-stage');
             const processingStage = document.getElementById('processing-stage');
             const resultStage = document.getElementById('result-stage');
+            const confirmationSection = document.getElementById('confirmation-section');
             const dropArea = document.getElementById('drop-area');
             const fileInput = document.getElementById('file-input');
-            const filesListContainer = document.getElementById('files-list-container');
-            const filesList = document.getElementById('files-list');
+            const fileNameDisplay = document.getElementById('file-name');
             const taskOptions = document.getElementById('task-options');
-            const processButton = document.getElementById('process-button');
+            const emailSection = document.getElementById('email-section');
+            const submitButton = document.getElementById('submit-button');
             const statusText = document.getElementById('status-text');
-            const resultTabs = document.getElementById('result-tabs');
-            const resultContents = document.getElementById('result-contents');
+            const resultText = document.getElementById('result-text');
+            const copyButton = document.getElementById('copy-button');
             const resetButton = document.getElementById('reset-button');
-            
-            // Estado da Aplicação
-            let ffmpeg;
-            let ffmpegLoaded = false;
-            let selectedFiles = [];
-            
-            // Carregar FFmpeg de forma segura
-            async function loadFFmpeg() {
-                try {
-                    if (typeof FFmpegWASM === 'undefined') {
-                        setTimeout(loadFFmpeg, 100);
-                        return;
-                    }
-                    const { FFmpeg } = FFmpegWASM;
-                    ffmpeg = new FFmpeg();
-                    await ffmpeg.load({ coreURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js" });
-                    ffmpegLoaded = true;
-                    processButton.disabled = true;
-                    processButton.textContent = 'Selecione um ou mais arquivos';
-                } catch (e) {
-                    processButton.textContent = 'Erro ao carregar motor de áudio';
-                    console.error("FFmpeg load error:", e);
-                }
-            }
-            loadFFmpeg();
+            const resetButton2 = document.getElementById('reset-button-2');
+
+            let selectedFile = null;
+            let selectedTask = '';
 
             // Lógica de Upload
             dropArea.addEventListener('click', () => fileInput.click());
@@ -197,153 +177,111 @@
             dropArea.addEventListener('drop', (e) => {
                 e.preventDefault();
                 dropArea.classList.remove('dragover');
-                handleFiles(e.dataTransfer.files);
+                if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
             });
-            fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length) handleFile(fileInput.files[0]);
+            });
 
-            function handleFiles(files) {
-                selectedFiles = Array.from(files);
-                renderFilesList();
+            function handleFile(file) {
+                selectedFile = file;
+                fileNameDisplay.textContent = `Arquivo selecionado: ${file.name}`;
+                fileNameDisplay.classList.remove('hidden');
+                taskOptions.classList.remove('hidden');
                 validateForm();
             }
 
-            function renderFilesList() {
-                filesList.innerHTML = '';
-                if (selectedFiles.length > 0) {
-                    selectedFiles.forEach((file, index) => {
-                        const li = document.createElement('li');
-                        li.className = 'file-item';
-                        li.dataset.index = index;
-                        li.draggable = true;
-                        li.innerHTML = `<span>${file.name}</span><button class="remove-file-btn" data-index="${index}">×</button>`;
-                        filesList.appendChild(li);
-                    });
-                    filesListContainer.classList.remove('hidden');
-                    taskOptions.classList.remove('hidden');
-                } else {
-                    filesListContainer.classList.add('hidden');
-                    taskOptions.classList.add('hidden');
-                }
-            }
-            
-            // Lógica de Reordenar (Drag and Drop)
-            let dragStartIndex;
-            filesList.addEventListener('dragstart', (e) => {
-                dragStartIndex = +e.target.dataset.index;
-            });
-            filesList.addEventListener('dragover', (e) => e.preventDefault());
-            filesList.addEventListener('drop', (e) => {
-                const dragEndIndex = +e.target.closest('li').dataset.index;
-                const [draggedItem] = selectedFiles.splice(dragStartIndex, 1);
-                selectedFiles.splice(dragEndIndex, 0, draggedItem);
-                renderFilesList();
-            });
-            
-            filesList.addEventListener('click', (e) => {
-                if (e.target.classList.contains('remove-file-btn')) {
-                    const index = +e.target.dataset.index;
-                    selectedFiles.splice(index, 1);
-                    renderFilesList();
+            // Lógica de Seleção de Tarefa
+            document.querySelectorAll('.task-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    selectedTask = option.dataset.task;
+                    document.querySelectorAll('.task-option').forEach(el => el.classList.remove('selected'));
+                    option.classList.add('selected');
+                    option.querySelector('input[type="radio"]').checked = true;
+                    emailSection.classList.toggle('hidden', selectedTask !== 'summary');
                     validateForm();
-                }
+                });
             });
 
+            document.getElementById('email-input').addEventListener('input', validateForm);
+            
             function validateForm() {
-                processButton.disabled = !(ffmpegLoaded && selectedFiles.length > 0);
+                const isTaskSelected = selectedTask !== '';
+                const isEmailValid = selectedTask !== 'summary' || (document.getElementById('email-input').value.includes('@'));
+                const canProcess = selectedFile && isTaskSelected && isEmailValid;
+                
+                submitButton.disabled = !canProcess;
+                if (!selectedFile) submitButton.textContent = 'Selecione um arquivo';
+                else if (!isTaskSelected) submitButton.textContent = 'Escolha uma ação';
+                else if (!isEmailValid) submitButton.textContent = 'Informe um e-mail válido';
+                else submitButton.textContent = 'Transcrever Áudio';
             }
             
-            // Processamento Principal
-            processButton.addEventListener('click', async () => {
-                setupStage.classList.add('hidden');
+            // Lógica de Envio e Processamento
+            submitButton.addEventListener('click', async () => {
+                if (!selectedFile) return;
+                uploadStage.classList.add('hidden');
                 processingStage.classList.remove('hidden');
-                
+                statusText.textContent = 'Enviando arquivo para o servidor...';
+
+                const formData = new FormData();
+                formData.append('audio', selectedFile);
+                formData.append('task', selectedTask);
+                if (selectedTask === 'summary') {
+                    formData.append('userEmail', document.getElementById('email-input').value);
+                }
+
                 try {
-                    const { fetchFile } = FFmpegUtil;
-                    let fileToProcess;
-
-                    if (selectedFiles.length > 1) {
-                        statusText.textContent = `Unindo ${selectedFiles.length} arquivos...`;
-                        const fileNames = [];
-                        for (let i = 0; i < selectedFiles.length; i++) {
-                            const name = `input${i}`;
-                            await ffmpeg.writeFile(name, await fetchFile(selectedFiles[i]));
-                            fileNames.push(`file '${name}'`);
-                        }
-                        await ffmpeg.writeFile('list.txt', fileNames.join('\n'));
-                        await ffmpeg.exec(['-f', 'concat', '-safe', '0', '-i', 'list.txt', 'merged.mp3']);
-                        fileToProcess = await ffmpeg.readFile('merged.mp3');
-                    } else {
-                        fileToProcess = await fetchFile(selectedFiles[0]);
-                    }
-
-                    statusText.textContent = 'Comprimindo áudio...';
-                    await ffmpeg.writeFile('input.file', fileToProcess);
-                    await ffmpeg.exec(['-i', 'input.file', '-b:a', '64k', '-vn', '-ar', '16000', 'output.mp3']);
-                    const finalAudioData = await ffmpeg.readFile('output.mp3');
-                    const finalAudioFile = new File([finalAudioData], 'processed_audio.mp3', { type: 'audio/mpeg' });
-
-                    statusText.textContent = 'Enviando para a IA da Labor AI...';
-                    const selectedTasks = Array.from(document.querySelectorAll('input[name="tasks"]:checked')).map(cb => cb.value);
-                    
-                    const formData = new FormData();
-                    formData.append('audio', finalAudioFile);
-                    formData.append('tasks', JSON.stringify(selectedTasks));
-
                     const response = await fetch(webhookUrl, { method: 'POST', body: formData });
-                    if (!response.ok) throw new Error('Falha na comunicação com o servidor.');
-
-                    const results = await response.json();
-                    displayResults(results);
-
+                    statusText.textContent = 'Aguardando a IA processar o áudio...';
+                    if (!response.ok) throw new Error(`Erro do servidor: ${response.status}`);
+                    
+                    if (selectedTask === 'transcribe') {
+                        const result = await response.json();
+                        if (result && result.transcricao) {
+                            resultText.value = result.transcricao;
+                            processingStage.classList.add('hidden');
+                            resultStage.classList.remove('hidden');
+                        } else {
+                           throw new Error('Resposta do servidor inválida.');
+                        }
+                    } else { // Tarefa de resumo
+                        processingStage.classList.add('hidden');
+                        confirmationSection.classList.remove('hidden');
+                    }
                 } catch (error) {
-                    console.error(error);
-                    statusText.textContent = `Erro: ${error.message}`;
+                    processingStage.classList.add('hidden');
+                    uploadStage.classList.remove('hidden');
+                    alert(`Ocorreu um erro: ${error.message}`);
+                    resetUI();
                 }
             });
             
-            function displayResults(results) {
-                processingStage.classList.add('hidden');
-                resultStage.classList.remove('hidden');
-                resultTabs.innerHTML = '';
-                resultContents.innerHTML = '';
-
-                Object.keys(results).forEach((key, index) => {
-                    const tab = document.createElement('div');
-                    tab.className = 'tab' + (index === 0 ? ' active' : '');
-                    tab.textContent = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                    tab.dataset.tab = key;
-                    resultTabs.appendChild(tab);
-
-                    const content = document.createElement('div');
-                    content.className = 'tab-content' + (index === 0 ? ' active' : '');
-                    content.id = `content-${key}`;
-                    const textArea = document.createElement('textarea');
-                    textArea.className = 'result-text';
-                    textArea.readOnly = true;
-                    textArea.value = results[key];
-                    content.appendChild(textArea);
-                    resultContents.appendChild(content);
-                });
-
-                resultTabs.addEventListener('click', (e) => {
-                    if(e.target.classList.contains('tab')) {
-                        const tabKey = e.target.dataset.tab;
-                        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                        e.target.classList.add('active');
-                        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                        document.getElementById(`content-${tabKey}`).classList.add('active');
-                    }
-                });
-            }
-
-            resetButton.addEventListener('click', () => {
-                selectedFiles = [];
-                renderFilesList();
-                validateForm();
-                resultStage.classList.add('hidden');
-                setupStage.classList.remove('hidden');
+            // Ações Finais
+            copyButton.addEventListener('click', () => {
+                navigator.clipboard.writeText(resultText.value);
+                copyButton.textContent = 'Copiado!';
+                setTimeout(() => { copyButton.textContent = 'Copiar Texto'; }, 2000);
             });
+            
+            const resetUI = () => {
+                selectedFile = null;
+                selectedTask = '';
+                fileInput.value = '';
+                document.getElementById('email-input').value = '';
+                fileNameDisplay.classList.add('hidden');
+                taskOptions.classList.add('hidden');
+                emailSection.classList.add('hidden');
+                document.querySelectorAll('.task-option').forEach(el => el.classList.remove('selected'));
+                document.querySelectorAll('input[name="task"]').forEach(radio => radio.checked = false);
+                resultStage.classList.add('hidden');
+                confirmationSection.classList.add('hidden');
+                uploadStage.classList.remove('hidden');
+                validateForm();
+            };
 
+            resetButton.addEventListener('click', resetUI);
+            resetButton2.addEventListener('click', resetUI);
         });
     </script>
 </body>

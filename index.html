@@ -3,361 +3,408 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transcrição de Áudio - Labor AI</title>
+    <title>Labor AI - Processador Inteligente de Áudio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code&display=swap" rel="stylesheet">
+    
+    <!-- FFmpeg.wasm - Carregado de forma assíncrona -->
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.min.js" defer></script>
+    <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/util.min.js" defer></script>
     
     <style>
-        /* --- GERAL E FONTES --- */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
-
+        /* CSS Completo e Refinado */
         :root {
-            --primary-color: #0d9488; /* Um tom de verde-azulado (teal) para um look AI/tech */
+            --primary-color: #0d9488;
             --primary-hover: #0f766e;
             --sidebar-bg: #1f2937;
-            --sidebar-text: #d1d5db;
+            --sidebar-text: #9ca3af;
             --sidebar-text-hover: #ffffff;
             --sidebar-active-bg: rgba(13, 148, 136, 0.2);
             --content-bg: #f9fafb;
-            --container-bg: #ffffff;
-            --text-primary: #11            color: var(--text-secondary);
-            transition: all 0.2s ease;
+            --card-bg: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --border-color: #e5e7eb;
+            --success-color: #16a34a;
+            --error-color: #dc2626;
         }
 
-        .file-input-wrapper:hover .file-input-label {
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--content-bg); color: var(--text-primary); line-height: 1.6; }
 
-        #fileName {
-            font-weight: 500;
-            margin-left: 8px;
-            color: var(--text-primary);
-        }
+        .app-layout { display: flex; height: 100vh; }
+        .sidebar { width: 260px; background-color: var(--sidebar-bg); color: var(--sidebar-text); padding: 24px; display: flex; flex-direction: column; flex-shrink: 0; }
+        .main-content { flex-grow: 1; padding: 40px; overflow-y: auto; }
 
-        #submitButton {
-            width: 100%;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 14px 20px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
+        .sidebar-header { margin-bottom: 40px; }
+        .logo { font-size: 24px; font-weight: 700; color: var(--sidebar-text-hover); }
+        .logo-subtitle { font-size: 14px; color: var(--sidebar-text); }
 
-        #submitButton:hover:not(:disabled) {
-            background-color: var(--primary-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
-        }
+        .sidebar-nav a { display: flex; align-items: center; padding: 12px 16px; color: var(--sidebar-text); text-decoration: none; border-radius: 8px; margin-bottom: 8px; font-weight: 500; transition: all 0.2s ease; }
+        .sidebar-nav a:hover { background-color: rgba(255, 255, 255, 0.05); color: var(--sidebar-text-hover); }
+        .sidebar-nav a.active { background-color: var(--sidebar-active-bg); color: var(--primary-color); font-weight: 700; }
+        .sidebar-nav a svg { margin-right: 12px; width: 20px; height: 20px; }
+        .sidebar-footer { margin-top: auto; font-size: 12px; text-align: center; }
 
-        #submitButton:disabled {
-            background-color: #a5b4fc;
-            cursor: not-allowed;
-        }
+        .content-header { margin-bottom: 32px; }
+        .content-title { font-size: 32px; font-weight: 700; color: var(--text-primary); }
+        .content-subtitle { font-size: 18px; color: var(--text-secondary); margin-top: 4px; }
 
-        /* --- STATUS E RESULTADO --- */
-        #status {
-            margin-top: 24px;
-            color: var(--text-secondary);
-            font-weight: 500;
-            height: 24px;
-        }
-        #status.error {
-            color: var(--error-color);
-        }
-
-        #result-container {
-            display: none;
-            text-align: left;
-        }
+        .card { background: var(--card-bg); border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1); }
         
-        #result-container h3 {
-            color: var(--text-primary);
-            font-weight: 500;
-        }
-
-        #transcribedText {
-            width: 100%;
-            height: 250px;
-            margin-top: 16px;
-            padding: 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-family: inherit;
-            font-size: 15px;
-            line-height: 1.6;
-            resize: vertical;
-            box-sizing: border-box;
-            background-color: #f9fafb;
-        }
-
-        .result-actions {
-            margin-top: 16px;
-            display: flex;
-            gap: 12px;
-        }
-
-        .result-actions button {
-            flex-grow: 1;
-            padding: 10px;
-            font-weight: 500;
-        }
+        .upload-area { border: 2px dashed var(--border-color); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.2s ease; }
+        .upload-area:hover, .upload-area.dragover { border-color: var(--primary-color); background-color: #f0fdfa; }
         
-        #copyButton {
-            background-color: var(--success-color);
-        }
-        #copyButton:hover {
-            background-color: #15803d;
-        }
+        #files-list-container { margin-top: 24px; }
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; background-color: #f8f8f8; border-radius: 6px; margin-bottom: 8px; }
+        .remove-file-btn { background: none; border: none; color: var(--error-color); cursor: pointer; font-size: 18px; }
 
-        #resetButton {
-            background-color: var(--text-secondary);
-        }
-        #resetButton:hover {
-            background-color: #4b5563;
-        }
+        .task-options { margin-top: 24px; }
+        .task-option { padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; cursor: pointer; }
+        .task-option.selected { border-color: var(--primary-color); background-color: #f0fdfa; }
+        
+        #email-section { margin-top: 16px; display: none; }
+        #email-input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; }
 
-        /* --- BRANDING FOOTER --- */
-        .footer-branding {
-            margin-top: 32px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border-color);
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-        .footer-branding strong {
-            color: var(--text-primary);
-            font-weight: 500;
-        }
+        #process-button { width: 100%; padding: 16px; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 24px; }
+        #process-button:disabled { background-color: #a5b0b8; cursor: not-allowed; }
 
+        #status-container { margin-top: 24px; text-align: center; }
+        
+        #result-section { display: none; }
+        #result-text { width: 100%; height: 300px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-family: 'Fira Code', monospace; resize: vertical; }
+        .result-actions { margin-top: 16px; display: flex; gap: 12px; }
+        .result-actions button { flex-grow: 1; }
+
+        #confirmation-section { display: none; text-align: center; padding: 40px; background-color: #f0fdfa; border-radius: 12px; }
+
+        .button { padding: 12px 24px; border-radius: 8px; border: none; font-weight: 500; cursor: pointer; }
+        .btn-copy { background-color: var(--success-color); color: white; }
+        .btn-reset { background-color: var(--text-secondary); color: white; }
+
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Ferramenta de Transcrição</h1>
-        
-        <!-- SEÇÃO DE UPLOAD -->
-        <div id="upload-section">
-            <p>Envie um áudio e a IA da Labor_AI fará a transcrição em segundos.</p>
-            <form id="uploadForm">
-                <div class="file-input-wrapper">
-                    <label for="audioFile" class="file-input-label">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                        <span id="fileName">Clique para escolher um arquivo</span>
-                    </label>
-                    <input type="file" id="audioFile" name="audioFile" accept="audio/*" required>
-                </div>
-                <button type="submit" id="submitButton">Transcrever Áudio</1827;
-            --text-secondary: #4b5563;
-            --border-color: #e5e7eb;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--content-bg);
-        }
-
-        /* --- LAYOUT PRINCIPAL (SIDEBAR + CONTEÚDO) --- */
-        .app-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            width: 260px;
-            background-color: var(--sidebar-bg);
-            color: var(--sidebar-text);
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-        }
-
-        .main-content {
-            flex-grow: 1;
-            padding: 40px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-        }
-
-        /* --- SIDEBAR --- */
-        .sidebar-header {
-            margin-bottom: 40px;
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--sidebar-text-hover);
-            text-align: center;
-        }
-        .sidebar-header span {
-            color: var(--primary-color);
-        }
-
-        .sidebar-nav a {
-            display: flex;
-            align-items: center;
-            padding: 12px 16px;
-            color: var(--sidebar-text);
-            text-decoration: none;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .sidebar-nav a:hover {
-            background-color: rgba(255, 255, 255, 0.05);
-            color: var(--sidebar-text-hover);
-        }
-
-        .sidebar-nav a.active {
-            background-color: var(--sidebar-active-bg);
-            color: var(--primary-color);
-            font-weight: 700;
-        }
-        
-        .sidebar-nav a svg {
-            margin-right: 12px;
-            width: 20px;
-            height: 20px;
-        }
-        
-        .sidebar-footer {
-            margin-top: auto;
-            font-size: button>
-            </form>
-        </div>
-
-        <!-- INDICADOR DE STATUS -->
-        <div id="status"></div>
-
-        <!-- SEÇÃO DE RESULTADO (oculta por padrão) -->
-        <div id="result-container">
-            <h3>Transcrição Completa:</h3>
-            <textarea id="transcribedText" readonly></textarea>
-            <div class="result-actions">
-                <button id="copyButton">Copiar Texto</button>
-                <button id="resetButton">Transcrever Outro</button>
+    <div class="app-layout">
+        <!-- Barra Lateral -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="logo">Labor AI</h1>
+                <p class="logo-subtitle">Produtividade Inteligente</p>
             </div>
-        </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-page="processor">Transcrição & Resumo</a>
+                <a href="#" class="nav-item" data-page="account">Minha Conta</a>
+            </nav>
+            <div class="sidebar-footer">
+                <p>© 2024 Labor AI</p>
+            </div>
+        </aside>
 
-        <!-- FOOTER COM A MARCA -->
-        <div class="footer-branding">
-            Uma ferramenta da <strong>Labor_AI</strong>
-        </div>
+        <!-- Conteúdo Principal -->
+        <main class="main-content">
+            <div id="processor-page" class="page active">
+                <header class="content-header">
+                    <h2 class="content-title">Processador Inteligente de Áudio</h2>
+                    <p class="content-subtitle">Una, comprima e analise seus áudios com IA avançada.</p>
+                </header>
+
+                <div class="card">
+                    <div id="upload-section">
+                        <!-- Área de Upload -->
+                        <div id="upload-area" class="upload-area">
+                            <p>Arraste seus áudios aqui ou clique para selecionar</p>
+                            <small>Você pode selecionar múltiplos arquivos para unir</small>
+                            <input type="file" id="file-input" multiple accept="audio/*" class="hidden">
+                        </div>
+
+                        <!-- Lista de Arquivos -->
+                        <div id="files-list-container" class="hidden">
+                            <h3>Arquivos Selecionados:</h3>
+                            <div id="files-list"></div>
+                        </div>
+
+                        <!-- Opções de Tarefa -->
+                        <div id="task-options" class="task-options hidden">
+                            <h3>1. Escolha a ação:</h3>
+                            <div class="task-option" data-task="transcricao_simples">
+                                <input type="radio" name="task" value="transcricao_simples" id="task_simple">
+                                <label for="task_simple">Apenas Transcrever</label>
+                            </div>
+                            <div class="task-option" data-task="resumir_reuniao">
+                                <input type="radio" name="task" value="resumir_reuniao" id="task_summary">
+                                <label for="task_summary">Transcrever e Gerar Resumo por IA</label>
+                            </div>
+                        </div>
+
+                        <!-- Campo de E-mail -->
+                        <div id="email-section" class="hidden">
+                            <h3>2. Informe seu e-mail para receber o resumo:</h3>
+                            <input type="email" id="email-input" placeholder="seu@email.com">
+                        </div>
+
+                        <!-- Botão de Processamento -->
+                        <button id="process-button" disabled>Selecione um arquivo para começar</button>
+                    </div>
+
+                    <!-- Status -->
+                    <div id="status-container" class="hidden">
+                        <p id="status-text">Processando...</p>
+                    </div>
+
+                    <!-- Resultados -->
+                    <div id="result-section" class="hidden">
+                        <h3>Transcrição Completa:</h3>
+                        <textarea id="result-text" readonly></textarea>
+                        <div class="result-actions">
+                            <button id="copy-button" class="button btn-copy">Copiar Texto</button>
+                            <button id="reset-button" class="button btn-reset">Processar Outro</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Confirmação de Resumo -->
+                    <div id="confirmation-section" class="hidden">
+                        <h3>Sucesso!</h3>
+                        <p>Seu pedido foi recebido. O resumo da sua reunião será gerado e enviado para o e-mail informado em breve.</p>
+                        <button id="reset-button-2" class="button btn-reset" style="margin-top: 20px;">Processar Outro</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="account-page" class="page hidden">
+                <header class="content-header">
+                    <h2 class="content-title">Minha Conta</h2>
+                </header>
+                <div class="card">
+                    <p>Esta funcionalidade estará disponível em breve.</p>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script>
-        // Seleção dos elementos da página
-        const uploadSection = document.getElementById('upload-section');
-        const form = document.getElementById('uploadForm');
-        const audioInput = document.getElementById('audioFile');
-        const fileNameSpan = document.getElementById('fileName');
-        const submitButton = document.getElementById('submitButton');
-        const statusDiv = document.getElementById('status');
-        const resultContainer = document.getElementById('result-container');
-        const transcribedText = document.getElementById('transcribedText');
-        const copyButton = document.getElementById('copyButton');
-        const resetButton = document.getElementById('resetButton');
+        document.addEventListener('DOMContentLoaded', () => {
+            let ffmpeg;
+            let ffmpegLoaded = false;
+            let selectedFiles = [];
+            let selectedTask = '';
 
-        // URL do Webhook já inserida
-        const webhookUrl = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/a7afa173-d939-46f8-80d7-0e2a9845c928';
-
-        // Atualiza o nome do arquivo na tela quando selecionado
-        audioInput.addEventListener('change', () => {
-            if (audioInput.files.length > 0) {
-                fileNameSpan.textContent = audioInput.files[0].name;
-            } else {
-                fileNameSpan.textContent = 'Clique para escolher um arquivo';
-            }
-        });
-
-        // Função principal que lida com o envio
-        form.addEventListener('submit', async (event) => {
-            event.preventDefault();
+            // Seletores de Elementos
+            const uploadArea = document.getElementById('upload-area');
+            const fileInput = document.getElementById('file-input');
+            const filesListContainer = document.getElementById('files-list-container');
+            const filesList = document.getElementById('files-list');
+            const taskOptions = document.getElementById('task-options');
+            const emailSection = document.getElementById('email-section');
+            const processButton = document.getElementById('process-button');
+            const statusContainer = document.getElementById('status-container');
+            const statusText = document.getElementById('status-text');
+            const uploadSection = document.getElementById('upload-section');
+            const resultSection = document.getElementById('result-section');
+            const resultText = document.getElementById('result-text');
+            const confirmationSection = document.getElementById('confirmation-section');
+            const copyButton = document.getElementById('copy-button');
+            const resetButton = document.getElementById('reset-button');
+            const resetButton2 = document.getElementById('reset-button-2');
             
-            submitButton.disabled = true;
-            submitButton.textContent = 'Enviando...';
-            statusDiv.classList.remove('error');
-            statusDiv.textContent = 'Enviando arquivo para o servidor...';
+            const webhookUrl = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/a7afa173-d939-46f8-80d7-0e2a9845c928';
 
-            const formData = new FormData(form);
-
-            try {
-                const response = await fetch(webhookUrl, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                statusDiv.textContent = 'Arquivo recebido. A transcrição começou (isso pode levar vários minutos)...';
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`O servidor respondeu com um erro: ${response.status}. Detalhes: ${errorText}`);
-                }
-
-                const result = await response.json();
+            // Carregar FFmpeg
+            const loadFFmpeg = async () => {
+                statusText.textContent = 'Carregando motor de áudio...';
+                statusContainer.classList.remove('hidden');
                 
-                if (result.transcricao) {
-                    showResult(result.transcricao);
-                } else {
-                    throw new Error('A resposta do servidor não continha a transcrição.');
+                try {
+                    const { FFmpeg } = FFmpegWASM;
+                    ffmpeg = new FFmpeg();
+                    await ffmpeg.load({
+                        coreURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js"
+                    });
+                    ffmpegLoaded = true;
+                    console.log('FFmpeg carregado.');
+                    statusContainer.classList.add('hidden');
+                    validateForm();
+                } catch (error) {
+                    console.error('Falha ao carregar FFmpeg:', error);
+                    statusText.textContent = 'Erro ao carregar o motor de áudio. Tente recarregar a página.';
                 }
+            };
+            loadFFmpeg();
 
-            } catch (error) {
-                showError(error.message);
-                console.error('Erro detalhado:', error);
+            // Eventos de Upload
+            uploadArea.addEventListener('click', () => fileInput.click());
+            uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+            uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+            fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+            function handleFiles(files) {
+                selectedFiles = Array.from(files);
+                renderFilesList();
+                validateForm();
             }
-        });
 
-        // Função para copiar o texto
-        copyButton.addEventListener('click', () => {
-            navigator.clipboard.writeText(transcribedText.value).then(() => {
+            function renderFilesList() {
+                filesList.innerHTML = '';
+                if (selectedFiles.length > 0) {
+                    selectedFiles.forEach((file, index) => {
+                        const fileElement = document.createElement('div');
+                        fileElement.className = 'file-item';
+                        fileElement.innerHTML = `
+                            <span>${file.name}</span>
+                            <button class="remove-file-btn" data-index="${index}">×</button>
+                        `;
+                        filesList.appendChild(fileElement);
+                    });
+                    filesListContainer.classList.remove('hidden');
+                    taskOptions.classList.remove('hidden');
+                } else {
+                    filesListContainer.classList.add('hidden');
+                    taskOptions.classList.add('hidden');
+                    emailSection.classList.add('hidden');
+                }
+            }
+            
+            filesList.addEventListener('click', (e) => {
+                if (e.target.classList.contains('remove-file-btn')) {
+                    const index = parseInt(e.target.dataset.index, 10);
+                    selectedFiles.splice(index, 1);
+                    renderFilesList();
+                    validateForm();
+                }
+            });
+
+            // Eventos de Opções de Tarefa
+            taskOptions.addEventListener('change', (e) => {
+                if (e.target.name === 'task') {
+                    selectedTask = e.target.value;
+                    emailSection.classList.toggle('hidden', selectedTask !== 'resumir_reuniao');
+                    validateForm();
+                }
+            });
+
+            function validateForm() {
+                const isTaskSelected = selectedTask !== '';
+                const isEmailValid = selectedTask !== 'resumir_reuniao' || document.getElementById('email-input').value.includes('@');
+                const canProcess = ffmpegLoaded && selectedFiles.length > 0 && isTaskSelected && isEmailValid;
+                
+                processButton.disabled = !canProcess;
+                if (selectedFiles.length === 0) {
+                    processButton.textContent = 'Selecione um arquivo para começar';
+                } else if (!isTaskSelected) {
+                    processButton.textContent = 'Escolha uma ação';
+                } else if (!isEmailValid) {
+                    processButton.textContent = 'Informe um e-mail válido';
+                } else {
+                    processButton.textContent = 'Iniciar Processamento';
+                }
+            }
+            document.getElementById('email-input').addEventListener('input', validateForm);
+
+            // Processamento Principal
+            processButton.addEventListener('click', async () => {
+                uploadSection.classList.add('hidden');
+                statusContainer.classList.remove('hidden');
+                processButton.disabled = true;
+
+                try {
+                    const { fetchFile } = FFmpegUtil;
+                    let processedFile;
+
+                    if (selectedFiles.length > 1) {
+                        statusText.textContent = `Unindo ${selectedFiles.length} arquivos...`;
+                        const fileNames = [];
+                        for (let i = 0; i < selectedFiles.length; i++) {
+                            const name = `input${i}`;
+                            await ffmpeg.writeFile(name, await fetchFile(selectedFiles[i]));
+                            fileNames.push(`file '${name}'`);
+                        }
+                        await ffmpeg.writeFile('list.txt', fileNames.join('\n'));
+                        await ffmpeg.exec(['-f', 'concat', '-safe', '0', '-i', 'list.txt', 'merged.mp3']);
+                        const data = await ffmpeg.readFile('merged.mp3');
+                        processedFile = new File([data], 'merged_audio.mp3', { type: 'audio/mpeg' });
+                    } else {
+                        processedFile = selectedFiles[0];
+                    }
+
+                    statusText.textContent = 'Comprimindo áudio para otimizar envio...';
+                    await ffmpeg.writeFile('input.file', await fetchFile(processedFile));
+                    await ffmpeg.exec(['-i', 'input.file', '-b:a', '64k', '-vn', '-ar', '16000', 'output.mp3']);
+                    const finalData = await ffmpeg.readFile('output.mp3');
+                    const finalFile = new File([finalData], 'optimized_audio.mp3', { type: 'audio/mpeg' });
+
+                    statusText.textContent = 'Enviando para a IA da Labor AI...';
+                    const formData = new FormData();
+                    formData.append('audioFile', finalFile);
+                    formData.append('task', selectedTask);
+                    if (selectedTask === 'resumir_reuniao') {
+                        formData.append('userEmail', document.getElementById('email-input').value);
+                    }
+                    
+                    const response = await fetch(webhookUrl, { method: 'POST', body: formData });
+                    if (!response.ok) throw new Error('Falha no envio para o servidor.');
+                    
+                    if (selectedTask === 'transcricao_simples') {
+                        const result = await response.json();
+                        resultText.value = formatTranscription(result.transcricao);
+                        statusContainer.classList.add('hidden');
+                        resultSection.classList.remove('hidden');
+                    } else {
+                        statusContainer.classList.add('hidden');
+                        confirmationSection.classList.remove('hidden');
+                    }
+
+                } catch (error) {
+                    console.error(error);
+                    statusText.textContent = `Erro: ${error.message}`;
+                }
+            });
+
+            // Ações de Reset e Cópia
+            const resetApp = () => {
+                selectedFiles = [];
+                selectedTask = '';
+                renderFilesList();
+                uploadSection.classList.remove('hidden');
+                resultSection.classList.add('hidden');
+                confirmationSection.classList.add('hidden');
+                document.querySelectorAll('input[name="task"]').forEach(rb => rb.checked = false);
+                validateForm();
+            };
+            
+            resetButton.addEventListener('click', resetApp);
+            resetButton2.addEventListener('click', resetApp);
+            
+            copyButton.addEventListener('click', () => {
+                navigator.clipboard.writeText(resultText.value);
                 copyButton.textContent = 'Copiado!';
-                setTimeout(() => {
-                    copyButton.textContent = 'Copiar Texto';
-                }, 2000);
+                setTimeout(() => { copyButton.textContent = 'Copiar Texto'; }, 2000);
+            });
+
+            function formatTranscription(text) {
+                if (!text) return '';
+                // Adiciona quebra de linha após pontuação final, se seguida por espaço e letra maiúscula.
+                return text.replace(/([.!?])\s+(?=[A-Z])/g, '$1\n\n');
+            }
+
+            // Navegação entre páginas (simulada)
+            document.querySelectorAll('.nav-item').forEach(link => {
+                link.addEventListener('click', e => {
+                    e.preventDefault();
+                    const pageId = link.dataset.page;
+                    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                    document.getElementById(`${pageId}-page`).classList.add('active');
+                    document.querySelectorAll('.nav-item').forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                });
             });
         });
-
-        // Função para resetar a interface
-        resetButton.addEventListener('click', resetUI);
-
-        function showResult(text) {
-            uploadSection.style.display = 'none';
-            statusDiv.style.display = 'none';
-            resultContainer.style.display = 'block';
-            transcribedText.value = text;
-        }
-
-        function showError(message) {
-            statusDiv.textContent = `Falha: ${message}`;
-            statusDiv.classList.add('error');
-            submitButton.disabled = false;
-            submitButton.textContent = 'Tentar Novamente';
-        }
-
-        function resetUI() {
-            resultContainer.style.display = 'none';
-            uploadSection.style.display = 'block';
-            statusDiv.style.display = 'block';
-            statusDiv.textContent = '';
-            statusDiv.classList.remove('error');
-            form.reset();
-            fileNameSpan.textContent = 'Clique para escolher um arquivo';
-            submitButton.disabled = false;
-            submitButton.textContent = 'Transcrever Áudio';
-        }
-
     </script>
+
 </body>
 </html>

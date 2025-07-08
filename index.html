@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcrição de Áudio - Labor AI</title>
+    
+    <style>
+        /* --- GERAL E FONTES --- */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+
+        :root {
+            --primary-color: #0d9488; /* Um tom de verde-azulado (teal) para um look AI/tech */
+            --primary-hover: #0f766e;
+            --sidebar-bg: #1f2937;
+            --sidebar-text: #d1d5db;
+            --sidebar-text-hover: #ffffff;
+            --sidebar-active-bg: rgba(13, 148, 136, 0.2);
+            --content-bg: #f9fafb;
+            --container-bg: #ffffff;
+            --text-primary: #11            color: var(--text-secondary);
+            transition: all 0.2s ease;
+        }
+
+        .file-input-wrapper:hover .file-input-label {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        #fileName {
+            font-weight: 500;
+            margin-left: 8px;
+            color: var(--text-primary);
+        }
+
+        #submitButton {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        #submitButton:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+        }
+
+        #submitButton:disabled {
+            background-color: #a5b4fc;
+            cursor: not-allowed;
+        }
+
+        /* --- STATUS E RESULTADO --- */
+        #status {
+            margin-top: 24px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            height: 24px;
+        }
+        #status.error {
+            color: var(--error-color);
+        }
+
+        #result-container {
+            display: none;
+            text-align: left;
+        }
+        
+        #result-container h3 {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        #transcribedText {
+            width: 100%;
+            height: 250px;
+            margin-top: 16px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 15px;
+            line-height: 1.6;
+            resize: vertical;
+            box-sizing: border-box;
+            background-color: #f9fafb;
+        }
+
+        .result-actions {
+            margin-top: 16px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .result-actions button {
+            flex-grow: 1;
+            padding: 10px;
+            font-weight: 500;
+        }
+        
+        #copyButton {
+            background-color: var(--success-color);
+        }
+        #copyButton:hover {
+            background-color: #15803d;
+        }
+
+        #resetButton {
+            background-color: var(--text-secondary);
+        }
+        #resetButton:hover {
+            background-color: #4b5563;
+        }
+
+        /* --- BRANDING FOOTER --- */
+        .footer-branding {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .footer-branding strong {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Ferramenta de Transcrição</h1>
+        
+        <!-- SEÇÃO DE UPLOAD -->
+        <div id="upload-section">
+            <p>Envie um áudio e a IA da Labor_AI fará a transcrição em segundos.</p>
+            <form id="uploadForm">
+                <div class="file-input-wrapper">
+                    <label for="audioFile" class="file-input-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        <span id="fileName">Clique para escolher um arquivo</span>
+                    </label>
+                    <input type="file" id="audioFile" name="audioFile" accept="audio/*" required>
+                </div>
+                <button type="submit" id="submitButton">Transcrever Áudio</1827;
+            --text-secondary: #4b5563;
+            --border-color: #e5e7eb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--content-bg);
+        }
+
+        /* --- LAYOUT PRINCIPAL (SIDEBAR + CONTEÚDO) --- */
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar-header {
+            margin-bottom: 40px;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--sidebar-text-hover);
+            text-align: center;
+        }
+        .sidebar-header span {
+            color: var(--primary-color);
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            color: var(--sidebar-text);
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-nav a:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--sidebar-text-hover);
+        }
+
+        .sidebar-nav a.active {
+            background-color: var(--sidebar-active-bg);
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+        
+        .sidebar-nav a svg {
+            margin-right: 12px;
+            width: 20px;
+            height: 20px;
+        }
+        
+        .sidebar-footer {
+            margin-top: auto;
+            font-size: button>
+            </form>
+        </div>
+
+        <!-- INDICADOR DE STATUS -->
+        <div id="status"></div>
+
+        <!-- SEÇÃO DE RESULTADO (oculta por padrão) -->
+        <div id="result-container">
+            <h3>Transcrição Completa:</h3>
+            <textarea id="transcribedText" readonly></textarea>
+            <div class="result-actions">
+                <button id="copyButton">Copiar Texto</button>
+                <button id="resetButton">Transcrever Outro</button>
+            </div>
+        </div>
+
+        <!-- FOOTER COM A MARCA -->
+        <div class="footer-branding">
+            Uma ferramenta da <strong>Labor_AI</strong>
+        </div>
+    </div>
+
+    <script>
+        // Seleção dos elementos da página
+        const uploadSection = document.getElementById('upload-section');
+        const form = document.getElementById('uploadForm');
+        const audioInput = document.getElementById('audioFile');
+        const fileNameSpan = document.getElementById('fileName');
+        const submitButton = document.getElementById('submitButton');
+        const statusDiv = document.getElementById('status');
+        const resultContainer = document.getElementById('result-container');
+        const transcribedText = document.getElementById('transcribedText');
+        const copyButton = document.getElementById('copyButton');
+        const resetButton = document.getElementById('resetButton');
+
+        // URL do Webhook já inserida
+        const webhookUrl = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/a7afa173-d939-46f8-80d7-0e2a9845c928';
+
+        // Atualiza o nome do arquivo na tela quando selecionado
+        audioInput.addEventListener('change', () => {
+            if (audioInput.files.length > 0) {
+                fileNameSpan.textContent = audioInput.files[0].name;
+            } else {
+                fileNameSpan.textContent = 'Clique para escolher um arquivo';
+            }
+        });
+
+        // Função principal que lida com o envio
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            
+            submitButton.disabled = true;
+            submitButton.textContent = 'Enviando...';
+            statusDiv.classList.remove('error');
+            statusDiv.textContent = 'Enviando arquivo para o servidor...';
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                statusDiv.textContent = 'Arquivo recebido. A transcrição começou (isso pode levar vários minutos)...';
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`O servidor respondeu com um erro: ${response.status}. Detalhes: ${errorText}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.transcricao) {
+                    showResult(result.transcricao);
+                } else {
+                    throw new Error('A resposta do servidor não continha a transcrição.');
+                }
+
+            } catch (error) {
+                showError(error.message);
+                console.error('Erro detalhado:', error);
+            }
+        });
+
+        // Função para copiar o texto
+        copyButton.addEventListener('click', () => {
+            navigator.clipboard.writeText(transcribedText.value).then(() => {
+                copyButton.textContent = 'Copiado!';
+                setTimeout(() => {
+                    copyButton.textContent = 'Copiar Texto';
+                }, 2000);
+            });
+        });
+
+        // Função para resetar a interface
+        resetButton.addEventListener('click', resetUI);
+
+        function showResult(text) {
+            uploadSection.style.display = 'none';
+            statusDiv.style.display = 'none';
+            resultContainer.style.display = 'block';
+            transcribedText.value = text;
+        }
+
+        function showError(message) {
+            statusDiv.textContent = `Falha: ${message}`;
+            statusDiv.classList.add('error');
+            submitButton.disabled = false;
+            submitButton.textContent = 'Tentar Novamente';
+        }
+
+        function resetUI() {
+            resultContainer.style.display = 'none';
+            uploadSection.style.display = 'block';
+            statusDiv.style.display = 'block';
+            statusDiv.textContent = '';
+            statusDiv.classList.remove('error');
+            form.reset();
+            fileNameSpan.textContent = 'Clique para escolher um arquivo';
+            submitButton.disabled = false;
+            submitButton.textContent = 'Transcrever Áudio';
+        }
+
+    </script>
+</body>
+</html>

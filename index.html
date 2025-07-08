@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Labor AI - Processador Inteligente de Áudio</title>
+    
+    <!-- Habilitar Cross-Origin Isolation para FFmpeg.wasm (ESSA É A CORREÇÃO) -->
+    <meta name="Cross-Origin-Opener-Policy" content="same-origin">
+    <meta name="Cross-Origin-Embedder-Policy" content="require-corp">
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code&display=swap" rel="stylesheet">
     
     <!-- FFmpeg.wasm - Carregado de forma assíncrona -->
@@ -59,7 +64,8 @@
         .remove-file-btn { background: none; border: none; color: var(--error-color); cursor: pointer; font-size: 18px; }
 
         .task-options { margin-top: 24px; }
-        .task-option { padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; cursor: pointer; }
+        .task-option { padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; }
+        .task-option input[type="radio"] { margin-right: 12px; }
         .task-option.selected { border-color: var(--primary-color); background-color: #f0fdfa; }
         
         #email-section { margin-top: 16px; display: none; }
@@ -82,6 +88,19 @@
         .btn-reset { background-color: var(--text-secondary); color: white; }
 
         .hidden { display: none; }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .app-layout { flex-direction: column; height: auto; }
+            .sidebar { width: 100%; height: auto; position: static; flex-direction: row; justify-content: space-between; align-items: center; padding: 16px; }
+            .sidebar-header .logo-subtitle { display: none; }
+            .sidebar-nav { display: flex; gap: 16px; }
+            .sidebar-footer { display: none; }
+            .main-content { padding: 24px; }
+            .content-title { font-size: 24px; }
+            .content-subtitle { font-size: 16px; }
+        }
+
     </style>
 </head>
 <body>
@@ -145,7 +164,7 @@
                         </div>
 
                         <!-- Botão de Processamento -->
-                        <button id="process-button" disabled>Selecione um arquivo para começar</button>
+                        <button id="process-button" disabled>Carregando motor de áudio...</button>
                     </div>
 
                     <!-- Status -->
@@ -210,8 +229,13 @@
             
             const webhookUrl = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/a7afa173-d939-46f8-80d7-0e2a9845c928';
 
-            // Carregar FFmpeg
-            const loadFFmpeg = async () => {
+            // Carregar FFmpeg de forma segura
+            const safeLoadFFmpeg = async () => {
+                if (typeof FFmpegWASM === 'undefined') {
+                    setTimeout(safeLoadFFmpeg, 100);
+                    return;
+                }
+                
                 statusText.textContent = 'Carregando motor de áudio...';
                 statusContainer.classList.remove('hidden');
                 
@@ -224,13 +248,15 @@
                     ffmpegLoaded = true;
                     console.log('FFmpeg carregado.');
                     statusContainer.classList.add('hidden');
+                    processButton.textContent = 'Selecione um arquivo para começar';
                     validateForm();
                 } catch (error) {
                     console.error('Falha ao carregar FFmpeg:', error);
+                    processButton.textContent = 'Erro ao carregar motor de áudio';
                     statusText.textContent = 'Erro ao carregar o motor de áudio. Tente recarregar a página.';
                 }
             };
-            loadFFmpeg();
+            safeLoadFFmpeg();
 
             // Eventos de Upload
             uploadArea.addEventListener('click', () => fileInput.click());
@@ -280,22 +306,30 @@
             });
 
             // Eventos de Opções de Tarefa
-            taskOptions.addEventListener('change', (e) => {
-                if (e.target.name === 'task') {
-                    selectedTask = e.target.value;
+            document.querySelectorAll('.task-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    selectedTask = option.dataset.task;
+                    document.querySelectorAll('.task-option').forEach(el => el.classList.remove('selected'));
+                    option.classList.add('selected');
+                    option.querySelector('input[type="radio"]').checked = true;
                     emailSection.classList.toggle('hidden', selectedTask !== 'resumir_reuniao');
                     validateForm();
-                }
+                });
             });
 
             function validateForm() {
+                if (!ffmpegLoaded) {
+                    processButton.disabled = true;
+                    return;
+                }
+
                 const isTaskSelected = selectedTask !== '';
-                const isEmailValid = selectedTask !== 'resumir_reuniao' || document.getElementById('email-input').value.includes('@');
-                const canProcess = ffmpegLoaded && selectedFiles.length > 0 && isTaskSelected && isEmailValid;
+                const isEmailValid = selectedTask !== 'resumir_reuniao' || (document.getElementById('email-input').value && document.getElementById('email-input').value.includes('@'));
+                const canProcess = selectedFiles.length > 0 && isTaskSelected && isEmailValid;
                 
                 processButton.disabled = !canProcess;
                 if (selectedFiles.length === 0) {
-                    processButton.textContent = 'Selecione um arquivo para começar';
+                    processButton.textContent = 'Selecione um ou mais arquivos';
                 } else if (!isTaskSelected) {
                     processButton.textContent = 'Escolha uma ação';
                 } else if (!isEmailValid) {
@@ -374,6 +408,7 @@
                 resultSection.classList.add('hidden');
                 confirmationSection.classList.add('hidden');
                 document.querySelectorAll('input[name="task"]').forEach(rb => rb.checked = false);
+                document.querySelectorAll('.task-option').forEach(el => el.classList.remove('selected'));
                 validateForm();
             };
             

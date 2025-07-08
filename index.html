@@ -3,372 +3,404 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Labor AI - Plataforma de Produtividade</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code&display=swap" rel="stylesheet">
+    <title>Transcritor Inteligente | Labor AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Fira+Code&display=swap" rel="stylesheet">
     
     <style>
-        /* CSS Completo e Refinado para a Plataforma */
         :root {
             --primary-color: #0d9488;
             --primary-hover: #0f766e;
-            --sidebar-bg: #1f2937;
-            --sidebar-text: #9ca3af;
-            --sidebar-text-hover: #ffffff;
-            --sidebar-active-bg: rgba(13, 148, 136, 0.2);
-            --content-bg: #f9fafb;
+            --background-color: #f3f4f6;
             --card-bg: #ffffff;
             --text-primary: #111827;
-            --text-secondary: #4b5563;
-            --border-color: #e5e7eb;
+            --text-secondary: #6b7280;
+            --border-color: #d1d5db;
             --success-color: #16a34a;
-            --error-color: #dc2626;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--content-bg); color: var(--text-primary); line-height: 1.6; }
 
-        .app-layout { display: flex; height: 100vh; }
-        .sidebar { width: 260px; background-color: var(--sidebar-bg); color: var(--sidebar-text); padding: 24px; display: flex; flex-direction: column; flex-shrink: 0; transition: margin-left 0.3s ease; }
-        .main-content { flex-grow: 1; padding: 40px; overflow-y: auto; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
 
-        .sidebar-header { margin-bottom: 40px; }
-        .logo { font-size: 24px; font-weight: 700; color: var(--sidebar-text-hover); }
-        .logo-subtitle { font-size: 14px; color: var(--sidebar-text); }
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 700px;
+            text-align: center;
+            padding: 40px;
+        }
 
-        .sidebar-nav a { display: flex; align-items: center; padding: 12px 16px; color: var(--sidebar-text); text-decoration: none; border-radius: 8px; margin-bottom: 8px; font-weight: 500; transition: all 0.2s ease; cursor: pointer; }
-        .sidebar-nav a:hover { background-color: rgba(255, 255, 255, 0.05); color: var(--sidebar-text-hover); }
-        .sidebar-nav a.active { background-color: var(--sidebar-active-bg); color: var(--primary-color); font-weight: 700; }
-        .sidebar-footer { margin-top: auto; font-size: 12px; text-align: center; }
+        .header {
+            margin-bottom: 32px;
+        }
 
-        .content-header { margin-bottom: 32px; }
-        .content-title { font-size: 32px; font-weight: 700; color: var(--text-primary); }
-        .content-subtitle { font-size: 18px; color: var(--text-secondary); margin-top: 4px; }
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+        }
 
-        .card { background: var(--card-bg); border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1); }
+        .header p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        #drop-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 48px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        #drop-area.dragover {
+            border-color: var(--primary-color);
+            background-color: #f0fdfa;
+            transform: scale(1.02);
+        }
+
+        #drop-area p {
+            margin: 0;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        #file-name {
+            margin-top: 16px;
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        #submit-button {
+            width: 100%;
+            padding: 16px;
+            margin-top: 24px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        #submit-button:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+            box-shadow: 0 4px 14px 0 rgba(13, 148, 136, 0.3);
+        }
+
+        #submit-button:disabled {
+            background-color: #a5b0b8;
+            cursor: not-allowed;
+        }
+
+        #processing-stage .spinner {
+            width: 48px;
+            height: 48px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #status-text {
+            margin-top: 24px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        #result-stage {
+            text-align: left;
+        }
+
+        #result-stage h3 {
+            font-size: 20px;
+            margin-bottom: 16px;
+        }
+
+        .metadata {
+            display: flex;
+            gap: 24px;
+            background-color: #f9fafb;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
         
-        .upload-area { border: 2px dashed var(--border-color); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.2s ease; }
-        .upload-area:hover, .upload-area.dragover { border-color: var(--primary-color); background-color: #f0fdfa; }
-        
-        .task-options { margin-top: 24px; }
-        .task-option { padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; }
-        .task-option input[type="radio"] { margin-right: 12px; }
-        .task-option.selected { border-color: var(--primary-color); background-color: #f0fdfa; }
-        
-        #email-section { margin-top: 16px; display: none; }
-        #email-input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; }
+        .metadata-item strong {
+            color: var(--text-primary);
+        }
 
-        #process-button { width: 100%; padding: 16px; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 24px; }
-        #process-button:disabled { background-color: #a5b0b8; cursor: not-allowed; }
+        #result-text {
+            width: 100%;
+            height: 350px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 15px;
+            line-height: 1.7;
+            resize: vertical;
+        }
 
-        #status-container { margin-top: 24px; text-align: center; }
-        
-        #result-section { display: none; }
-        #result-text { width: 100%; height: 300px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-family: 'Fira Code', monospace; resize: vertical; }
-        .result-actions { margin-top: 16px; display: flex; gap: 12px; }
-        .result-actions button { flex-grow: 1; }
+        .result-actions {
+            margin-top: 24px;
+            display: flex;
+            gap: 16px;
+        }
 
-        #confirmation-section { display: none; text-align: center; padding: 40px; background-color: #f0fdfa; border-radius: 12px; }
+        .result-actions button {
+            flex-grow: 1;
+            padding: 12px;
+            font-size: 15px;
+            font-weight: 500;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
 
-        .button { padding: 12px 24px; border-radius: 8px; border: none; font-weight: 500; cursor: pointer; }
         .btn-copy { background-color: var(--success-color); color: white; }
         .btn-reset { background-color: var(--text-secondary); color: white; }
 
-        .hidden { display: none; }
-
-        #menu-toggle { display: none; }
-        
-        @media (max-width: 768px) {
-            .app-layout { flex-direction: column; height: auto; }
-            .sidebar { width: 100%; height: auto; position: static; flex-direction: row; justify-content: space-between; align-items: center; padding: 16px; }
-            .sidebar-header .logo-subtitle { display: none; }
-            .sidebar-nav { position: fixed; top: 0; left: -100%; background: var(--sidebar-bg); height: 100vh; width: 260px; flex-direction: column; padding-top: 80px; transition: left 0.3s ease; z-index: 100; }
-            .sidebar.open .sidebar-nav { left: 0; }
-            #menu-toggle { display: block; background: none; border: none; color: white; cursor: pointer; z-index: 101; font-size: 24px; }
-            .sidebar-footer { display: none; }
-            .main-content { padding: 24px; }
-            .content-title { font-size: 24px; }
-            .content-subtitle { font-size: 16px; }
+        .footer {
+            margin-top: 40px;
+            font-size: 14px;
+            color: var(--text-secondary);
         }
+        .footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="app-layout">
-        <!-- Barra Lateral -->
-        <aside class="sidebar" id="sidebar">
-            <div>
-                <div class="sidebar-header">
-                    <h1 class="logo">Labor AI</h1>
-                    <p class="logo-subtitle">Produtividade Inteligente</p>
-                </div>
-                <nav class="sidebar-nav" id="sidebar-nav">
-                    <a href="#" class="nav-item active" data-page="processor">Transcrição & Resumo</a>
-                    <a href="#" class="nav-item" data-page="account">Minha Conta</a>
-                </nav>
+    <div class="container">
+        <!-- CABEÇALHO -->
+        <header class="header">
+            <h1>Transcritor Inteligente</h1>
+            <p>Envie seu áudio e deixe a IA da Labor AI fazer o trabalho pesado.</p>
+        </header>
+
+        <!-- ETAPA 1: UPLOAD -->
+        <div id="upload-stage">
+            <input type="file" id="file-input" class="hidden" accept="audio/*">
+            <div id="drop-area">
+                <p>Arraste e solte seu áudio aqui ou clique para selecionar</p>
+                <small>Formatos: MP3, M4A, OGG, WAV, etc.</small>
             </div>
-            <div class="sidebar-footer">
-                <p>© 2024 Labor AI</p>
+            <p id="file-name" class="hidden"></p>
+            <button id="submit-button" disabled>Selecione um arquivo</button>
+        </div>
+
+        <!-- ETAPA 2: PROCESSANDO -->
+        <div id="processing-stage" class="hidden">
+            <div class="spinner"></div>
+            <p id="status-text">Processando...</p>
+        </div>
+
+        <!-- ETAPA 3: RESULTADO -->
+        <div id="result-stage" class="hidden">
+            <h3>Transcrição Concluída</h3>
+            <div class="metadata">
+                <div class="metadata-item" id="meta-filename"></div>
+                <div class="metadata-item" id="meta-words"></div>
+                <div class="metadata-item" id="meta-read-time"></div>
             </div>
-            <button id="menu-toggle">☰</button>
-        </aside>
-
-        <!-- Conteúdo Principal -->
-        <main class="main-content">
-            <div id="processor-page" class="page active">
-                <header class="content-header">
-                    <h2 class="content-title">Processador Inteligente de Áudio</h2>
-                    <p class="content-subtitle">Transcreva e analise seus áudios com a nossa IA avançada.</p>
-                </header>
-
-                <div class="card">
-                    <div id="upload-stage">
-                        <!-- Área de Upload -->
-                        <div id="upload-area" class="upload-area">
-                            <p>Arraste seu áudio aqui ou clique para selecionar</p>
-                            <small>Formatos suportados: MP3, M4A, OGG, WAV, etc.</small>
-                            <input type="file" id="file-input" accept="audio/*" class="hidden">
-                        </div>
-
-                        <!-- Opções de Tarefa -->
-                        <div id="task-options" class="task-options hidden">
-                            <h3>1. Escolha a ação:</h3>
-                            <div class="task-option" data-task="transcricao_simples">
-                                <input type="radio" name="task" value="transcricao_simples" id="task_simple">
-                                <label for="task_simple">Apenas Transcrever</label>
-                            </div>
-                            <div class="task-option" data-task="resumir_reuniao">
-                                <input type="radio" name="task" value="resumir_reuniao" id="task_summary">
-                                <label for="task_summary">Transcrever e Gerar Resumo por IA</label>
-                            </div>
-                        </div>
-
-                        <!-- Campo de E-mail -->
-                        <div id="email-section" class="hidden">
-                            <h3>2. Informe seu e-mail para receber o resumo:</h3>
-                            <input type="email" id="email-input" placeholder="seu@email.com">
-                        </div>
-
-                        <!-- Botão de Processamento -->
-                        <button id="process-button" disabled>Selecione um arquivo para começar</button>
-                    </div>
-
-                    <!-- Status -->
-                    <div id="status-container" class="hidden">
-                        <p id="status-text">Processando...</p>
-                    </div>
-
-                    <!-- Resultados -->
-                    <div id="result-section" class="hidden">
-                        <h3>Transcrição Completa:</h3>
-                        <textarea id="result-text" readonly></textarea>
-                        <div class="result-actions">
-                            <button id="copy-button" class="button btn-copy">Copiar Texto</button>
-                            <button id="reset-button" class="button btn-reset">Processar Outro</button>
-                        </div>
-                    </div>
-                    
-                    <!-- Confirmação de Resumo -->
-                    <div id="confirmation-section" class="hidden">
-                        <h3>Sucesso!</h3>
-                        <p>Seu pedido foi recebido. O resumo da sua reunião será gerado e enviado para o e-mail informado em breve.</p>
-                        <button id="reset-button-2" class="button btn-reset" style="margin-top: 20px;">Processar Outro</button>
-                    </div>
-                </div>
+            <textarea id="result-text" readonly></textarea>
+            <div class="result-actions">
+                <button id="copy-button" class="btn-copy">Copiar Texto</button>
+                <button id="reset-button" class="btn-reset">Transcrever Outro</button>
             </div>
-
-            <div id="account-page" class="page hidden">
-                <header class="content-header">
-                    <h2 class="content-title">Minha Conta</h2>
-                </header>
-                <div class="card">
-                    <p>Esta funcionalidade estará disponível em breve.</p>
-                </div>
-            </div>
-        </main>
+        </div>
     </div>
+
+    <footer class="footer">
+        Desenvolvido pela <a href="#" target="_blank">Labor AI</a>
+    </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            let selectedFile = null;
-            let selectedTask = '';
-
-            // Seletores de Elementos
-            const uploadArea = document.getElementById('upload-area');
-            const fileInput = document.getElementById('file-input');
-            const taskOptions = document.getElementById('task-options');
-            const emailSection = document.getElementById('email-section');
-            const processButton = document.getElementById('process-button');
-            const statusContainer = document.getElementById('status-container');
-            const statusText = document.getElementById('status-text');
-            const uploadStage = document.getElementById('upload-stage');
-            const resultSection = document.getElementById('result-section');
-            const resultText = document.getElementById('result-text');
-            const confirmationSection = document.getElementById('confirmation-section');
-            const copyButton = document.getElementById('copy-button');
-            const resetButton = document.getElementById('reset-button');
-            const resetButton2 = document.getElementById('reset-button-2');
             const webhookUrl = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/a7afa173-d939-46f8-80d7-0e2a9845c928';
 
-            // --- Eventos da Interface ---
-            uploadArea.addEventListener('click', () => fileInput.click());
-            uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
-            uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('dragover');
-                if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
-            });
-            fileInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) handleFile(e.target.files[0]);
-            });
+            // Elementos de cada etapa
+            const uploadStage = document.getElementById('upload-stage');
+            const processingStage = document.getElementById('processing-stage');
+            const resultStage = document.getElementById('result-stage');
             
-            document.querySelectorAll('.task-option').forEach(option => {
-                option.addEventListener('click', () => {
-                    selectedTask = option.dataset.task;
-                    document.querySelectorAll('.task-option').forEach(el => el.classList.remove('selected'));
-                    option.classList.add('selected');
-                    option.querySelector('input[type="radio"]').checked = true;
-                    emailSection.classList.toggle('hidden', selectedTask !== 'resumir_reuniao');
-                    validateForm();
-                });
-            });
+            // Elementos interativos
+            const dropArea = document.getElementById('drop-area');
+            const fileInput = document.getElementById('file-input');
+            const fileNameDisplay = document.getElementById('file-name');
+            const submitButton = document.getElementById('submit-button');
+            const statusText = document.getElementById('status-text');
+            const resultText = document.getElementById('result-text');
+            const copyButton = document.getElementById('copy-button');
+            const resetButton = document.getElementById('reset-button');
             
-            document.getElementById('email-input').addEventListener('input', validateForm);
-            processButton.addEventListener('click', processRequest);
-            resetButton.addEventListener('click', resetApp);
-            resetButton2.addEventListener('click', resetApp);
-            copyButton.addEventListener('click', copyToClipboard);
+            // Elementos de metadados
+            const metaFilename = document.getElementById('meta-filename');
+            const metaWords = document.getElementById('meta-words');
+            const metaReadTime = document.getElementById('meta-read-time');
 
-            // --- Funções de Lógica ---
+            let selectedFile = null;
+
+            // Lógica de Upload
+            dropArea.addEventListener('click', () => fileInput.click());
+            dropArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropArea.classList.add('dragover');
+            });
+            dropArea.addEventListener('dragleave', () => dropArea.classList.remove('dragover'));
+            dropArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropArea.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {
+                    handleFile(e.dataTransfer.files[0]);
+                }
+            });
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length) {
+                    handleFile(fileInput.files[0]);
+                }
+            });
+
             function handleFile(file) {
                 selectedFile = file;
-                uploadArea.querySelector('p').textContent = `Arquivo Selecionado: ${file.name}`;
-                taskOptions.classList.remove('hidden');
-                validateForm();
+                fileNameDisplay.textContent = `Arquivo selecionado: ${file.name}`;
+                fileNameDisplay.classList.remove('hidden');
+                submitButton.disabled = false;
+                submitButton.textContent = 'Transcrever Áudio';
             }
+            
+            // Lógica de Envio
+            submitButton.addEventListener('click', async () => {
+                if (!selectedFile) return;
 
-            function validateForm() {
-                const isTaskSelected = selectedTask !== '';
-                const isEmailValid = selectedTask !== 'resumir_reuniao' || (document.getElementById('email-input').value && document.getElementById('email-input').value.includes('@'));
-                const canProcess = selectedFile && isTaskSelected && isEmailValid;
-                
-                processButton.disabled = !canProcess;
-                if (!selectedFile) {
-                    processButton.textContent = 'Selecione um arquivo para começar';
-                } else if (!isTaskSelected) {
-                    processButton.textContent = 'Escolha uma ação';
-                } else if (!isEmailValid) {
-                    processButton.textContent = 'Informe um e-mail válido';
-                } else {
-                    processButton.textContent = 'Iniciar Processamento';
-                }
-            }
-
-            async function processRequest() {
-                // Esconder formulário e mostrar status
+                // Mudar para a tela de processamento
                 uploadStage.classList.add('hidden');
-                statusContainer.classList.remove('hidden');
-                processButton.disabled = true;
+                processingStage.classList.remove('hidden');
                 statusText.textContent = 'Enviando arquivo para o servidor...';
-                
+
+                const formData = new FormData();
+                formData.append('audio', selectedFile);
+
                 try {
-                    const formData = new FormData();
-                    formData.append('audio', selectedFile); 
-                    formData.append('task', selectedTask);
-                    if (selectedTask === 'resumir_reuniao') {
-                        formData.append('userEmail', document.getElementById('email-input').value);
-                    }
-                    
-                    const response = await fetch(webhookUrl, { method: 'POST', body: formData });
-                    
-                    statusText.textContent = 'Processando na IA (isso pode levar alguns minutos)...';
+                    const response = await fetch(webhookUrl, {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    statusText.textContent = 'Aguardando a IA processar o áudio... (pode levar alguns minutos)';
 
                     if (!response.ok) {
-                        const errorDetails = await response.text();
-                        throw new Error(`Falha na resposta do servidor: ${response.status}. Detalhes: ${errorDetails}`);
+                        const errorText = await response.text();
+                        throw new Error(`Erro do servidor: ${response.status}. ${errorText}`);
                     }
-                    
+
                     const result = await response.json();
-                    
-                    if (selectedTask === 'transcricao_simples') {
-                        if (result && result.hasOwnProperty('transcricao')) {
-                            showTranscriptionResult(result.transcricao);
-                        } else {
-                            throw new Error('A resposta do servidor não continha o campo "transcricao".');
-                        }
-                    } else { // Tarefa de resumo
-                        showConfirmationMessage();
+
+                    if (result && result.transcricao) {
+                        displayResult(result.transcricao);
+                    } else {
+                        throw new Error('Resposta do servidor não contém a transcrição.');
                     }
 
                 } catch (error) {
-                    console.error(error);
-                    statusText.textContent = `Erro: ${error.message}. Tente novamente.`;
+                    console.error('Falha no processo:', error);
+                    displayError(error.message);
                 }
-            }
+            });
 
-            function showTranscriptionResult(text) {
-                resultText.value = formatTranscription(text);
-                statusContainer.classList.add('hidden');
-                resultSection.classList.remove('hidden');
+            // Lógica de Exibição do Resultado
+            function displayResult(text) {
+                const formattedText = formatTranscription(text);
+                const wordCount = countWords(formattedText);
+                const readTime = calculateReadTime(wordCount);
+                
+                // Preencher metadados
+                metaFilename.innerHTML = `<strong>Arquivo:</strong> ${selectedFile.name}`;
+                metaWords.innerHTML = `<strong>Palavras:</strong> ${wordCount}`;
+                metaReadTime.innerHTML = `<strong>Leitura:</strong> ~${readTime} min`;
+                
+                // Preencher texto e mostrar
+                resultText.value = formattedText;
+                processingStage.classList.add('hidden');
+                resultStage.classList.remove('hidden');
             }
-
-            function showConfirmationMessage() {
-                statusContainer.classList.add('hidden');
-                confirmationSection.classList.remove('hidden');
-            }
-
-            function resetApp() {
-                selectedFile = null;
-                selectedTask = '';
+            
+            function displayError(errorMessage) {
+                processingStage.classList.add('hidden');
                 uploadStage.classList.remove('hidden');
-                resultSection.classList.add('hidden');
-                confirmationSection.classList.add('hidden');
-                statusContainer.classList.add('hidden');
-                document.querySelectorAll('input[name="task"]').forEach(rb => rb.checked = false);
-                document.querySelectorAll('.task-option').forEach(el => el.classList.remove('selected'));
-                uploadArea.querySelector('p').textContent = 'Arraste seu áudio aqui ou clique para selecionar';
-                fileInput.value = '';
-                document.getElementById('email-input').value = '';
-                emailSection.classList.add('hidden');
-                validateForm();
+                alert(`Ocorreu um erro: ${errorMessage}`);
+                resetUI();
             }
 
-            function copyToClipboard() {
+            // Ações Finais
+            copyButton.addEventListener('click', () => {
                 navigator.clipboard.writeText(resultText.value);
                 copyButton.textContent = 'Copiado!';
-                setTimeout(() => { copyButton.textContent = 'Copiar Texto'; }, 2000);
+                setTimeout(() => {
+                    copyButton.textContent = 'Copiar Texto';
+                }, 2000);
+            });
+
+            resetButton.addEventListener('click', resetUI);
+            
+            function resetUI() {
+                selectedFile = null;
+                fileInput.value = '';
+                fileNameDisplay.classList.add('hidden');
+                submitButton.disabled = true;
+                submitButton.textContent = 'Selecione um arquivo';
+                
+                resultStage.classList.add('hidden');
+                uploadStage.classList.remove('hidden');
             }
 
+            // Funções Auxiliares
             function formatTranscription(text) {
                 if (!text) return '';
                 // Adiciona quebra de linha dupla após pontuação final, se seguida por espaço e letra maiúscula.
                 return text.replace(/([.!?])\s+(?=[A-ZÀ-Ú])/g, '$1\n\n');
             }
 
-            // Navegação entre páginas (simulada)
-            const navLinks = document.querySelectorAll('.nav-item');
-            const pages = document.querySelectorAll('.page');
-            navLinks.forEach(link => {
-                link.addEventListener('click', e => {
-                    e.preventDefault();
-                    const pageId = link.dataset.page;
-                    pages.forEach(p => p.classList.remove('active'));
-                    document.getElementById(`${pageId}-page`).classList.add('active');
-                    navLinks.forEach(l => l.classList.remove('active'));
-                    link.classList.add('active');
-                });
-            });
+            function countWords(text) {
+                if (!text) return 0;
+                return text.trim().split(/\s+/).length;
+            }
 
-            // Menu Mobile
-            const menuToggle = document.getElementById('menu-toggle');
-            const sidebar = document.getElementById('sidebar');
-            const sidebarNav = document.getElementById('sidebar-nav');
-            menuToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('open');
-                sidebarNav.classList.toggle('open');
-            });
+            function calculateReadTime(wordCount, wpm = 180) {
+                if (wordCount === 0) return 0;
+                const minutes = wordCount / wpm;
+                return Math.ceil(minutes);
+            }
         });
     </script>
-
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Processador Inteligente | Labor AI</title>
+    <title>Transcritor Inteligente | Labor AI</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Fira+Code&display=swap" rel="stylesheet">
     
     <style>
@@ -53,25 +53,29 @@
 
         .task-options { margin-top: 24px; text-align: left; }
         .task-option { padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; }
-        .task-option input[type="checkbox"] { margin-right: 12px; transform: scale(1.2); }
+        .task-option input[type="radio"] { margin-right: 12px; transform: scale(1.2); }
         .task-option.selected { border-color: var(--primary-color); background-color: #f0fdfa; }
         
-        #process-button { width: 100%; padding: 16px; margin-top: 24px; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; }
-        #process-button:disabled { background-color: #a5b0b8; cursor: not-allowed; }
+        #email-section { margin-top: 16px; display: none; text-align: left; }
+        #email-section h4 { margin-bottom: 8px; font-weight: 500; }
+        #email-input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; }
+
+        #submit-button { width: 100%; padding: 16px; margin-top: 24px; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; }
+        #submit-button:disabled { background-color: #a5b0b8; cursor: not-allowed; }
 
         #processing-stage .spinner { width: 48px; height: 48px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         #status-text { margin-top: 24px; font-weight: 500; color: var(--text-secondary); }
 
         #result-stage { text-align: left; }
-        .tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 24px; }
-        .tab { padding: 12px 20px; cursor: pointer; border-bottom: 3px solid transparent; color: var(--text-secondary); }
-        .tab.active { border-bottom-color: var(--primary-color); color: var(--primary-color); font-weight: 700; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
-        .result-text-area { width: 100%; height: 350px; padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; font-family: 'Fira Code', monospace; line-height: 1.7; resize: vertical; white-space: pre-wrap; background-color: #f9fafb; }
+        #result-text { width: 100%; height: 350px; padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; font-family: 'Fira Code', monospace; line-height: 1.7; resize: vertical; }
         .result-actions { margin-top: 16px; display: flex; gap: 16px; }
+
+        #confirmation-section { text-align: center; padding: 40px; background-color: #f0fdfa; border-radius: 12px; }
+
+        .button { flex-grow: 1; padding: 12px; font-size: 15px; font-weight: 500; border-radius: 8px; border: none; cursor: pointer; }
+        .btn-copy { background-color: var(--success-color); color: white; }
+        .btn-reset { background-color: var(--text-secondary); color: white; }
 
         .footer { margin-top: 40px; font-size: 14px; color: var(--text-secondary); }
         .hidden { display: none; }
@@ -81,12 +85,12 @@
 
     <div class="container">
         <header class="header">
-            <h1>Processador Avançado de Áudio</h1>
-            <p>Envie seu áudio e escolha as ações que a IA da Labor AI deve executar.</p>
+            <h1>Transcritor Inteligente</h1>
+            <p>Envie seu áudio e deixe a IA da Labor AI fazer o trabalho pesado.</p>
         </header>
 
         <!-- ETAPA 1: UPLOAD E CONFIGURAÇÃO -->
-        <div id="setup-stage">
+        <div id="upload-stage">
             <input type="file" id="file-input" class="hidden" accept="audio/*">
             <div id="drop-area">
                 <p>Arraste e solte seu áudio aqui ou clique para selecionar</p>
@@ -95,61 +99,77 @@
             <p id="file-name" class="hidden"></p>
 
             <div id="task-options" class="task-options hidden">
-                <h4>Ações Desejadas:</h4>
-                <div class="task-option">
-                    <input type="checkbox" id="task-transcribe" name="tasks" value="transcribe" checked>
-                    <label for="task-transcribe">Transcrição Completa</label>
+                <h4>1. Escolha a ação:</h4>
+                <div class="task-option" data-task="transcribe">
+                    <input type="radio" name="task" value="transcribe" id="task_simple">
+                    <label for="task_simple">Apenas Transcrever</label>
                 </div>
-                <div class="task-option">
-                    <input type="checkbox" id="task-bullets" name="tasks" value="bullets">
-                    <label for="task-bullets">Gerar Pontos Chave (Bullet Points)</label>
-                </div>
-                <div class="task-option">
-                    <input type="checkbox" id="task-summary" name="tasks" value="summary">
-                    <label for="task-summary">Criar Resumo Executivo</label>
+                <div class="task-option" data-task="summary">
+                    <input type="radio" name="task" value="summary" id="task_summary">
+                    <label for="task_summary">Gerar Resumo por IA (Enviado por E-mail)</label>
                 </div>
             </div>
 
-            <button id="process-button" disabled>Selecione um arquivo</button>
+            <div id="email-section" class="hidden">
+                <h4>2. Informe seu e-mail para receber o resumo:</h4>
+                <input type="email" id="email-input" placeholder="seu@email.com">
+            </div>
+
+            <button id="submit-button" disabled>Selecione um arquivo</button>
         </div>
 
         <!-- ETAPA 2: PROCESSANDO -->
         <div id="processing-stage" class="hidden">
             <div class="spinner"></div>
-            <p id="status-text">Iniciando...</p>
+            <p id="status-text">Processando...</p>
         </div>
 
-        <!-- ETAPA 3: RESULTADO -->
+        <!-- ETAPA 3: RESULTADOS -->
         <div id="result-stage" class="hidden">
-            <h3>Resultados do Processamento</h3>
-            <div class="tabs" id="result-tabs"></div>
-            <div id="result-contents"></div>
+            <h3>Transcrição Completa</h3>
+            <textarea id="result-text" readonly></textarea>
             <div class="result-actions">
-                <button id="reset-button">Processar Outro</button>
+                <button id="copy-button" class="button btn-copy">Copiar Texto</button>
+                <button id="reset-button" class="button btn-reset">Processar Outro</button>
             </div>
         </div>
+
+        <div id="confirmation-section" class="hidden">
+            <h3>Sucesso!</h3>
+            <p>Seu pedido foi recebido. O resumo será gerado e enviado para o e-mail informado em breve.</p>
+            <button id="reset-button-2" class="button btn-reset" style="margin-top: 20px;">Processar Outro</button>
+        </div>
+
     </div>
 
-    <footer class="footer">Desenvolvido pela Labor AI</footer>
+    <footer class="footer">
+        Desenvolvido pela Labor AI
+    </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const webhookUrl = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/a7afa173-d939-46f8-80d7-0e2a9845c928';
 
-            const setupStage = document.getElementById('setup-stage');
+            // Seletores
+            const uploadStage = document.getElementById('upload-stage');
             const processingStage = document.getElementById('processing-stage');
             const resultStage = document.getElementById('result-stage');
+            const confirmationSection = document.getElementById('confirmation-section');
             const dropArea = document.getElementById('drop-area');
             const fileInput = document.getElementById('file-input');
             const fileNameDisplay = document.getElementById('file-name');
             const taskOptions = document.getElementById('task-options');
-            const processButton = document.getElementById('process-button');
+            const emailSection = document.getElementById('email-section');
+            const emailInput = document.getElementById('email-input');
+            const submitButton = document.getElementById('submit-button');
             const statusText = document.getElementById('status-text');
-            const resultTabs = document.getElementById('result-tabs');
-            const resultContents = document.getElementById('result-contents');
+            const resultText = document.getElementById('result-text');
+            const copyButton = document.getElementById('copy-button');
             const resetButton = document.getElementById('reset-button');
-            
+            const resetButton2 = document.getElementById('reset-button-2');
+
             let selectedFile = null;
+            let selectedTask = '';
 
             // Lógica de Upload
             dropArea.addEventListener('click', () => fileInput.click());
@@ -161,7 +181,7 @@
                 if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
             });
             fileInput.addEventListener('change', () => {
-                if (fileInput.files.length) handleFile(fileInput.files[0]);
+                if (fileInput.files.length) handleFile(e.target.files[0]);
             });
 
             function handleFile(file) {
@@ -172,110 +192,104 @@
                 validateForm();
             }
 
-            document.querySelectorAll('input[name="tasks"]').forEach(checkbox => {
-                checkbox.addEventListener('change', validateForm);
+            // Lógica de Seleção de Tarefa
+            document.querySelectorAll('.task-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    selectedTask = option.dataset.task;
+                    document.querySelectorAll('.task-option').forEach(el => el.classList.remove('selected'));
+                    option.classList.add('selected');
+                    option.querySelector('input[type="radio"]').checked = true;
+                    
+                    if (selectedTask === 'summary') {
+                        emailSection.classList.remove('hidden');
+                    } else {
+                        emailSection.classList.add('hidden');
+                    }
+                    
+                    validateForm();
+                });
             });
+
+            emailInput.addEventListener('input', validateForm);
             
             function validateForm() {
-                const selectedTasks = Array.from(document.querySelectorAll('input[name="tasks"]:checked'));
-                const canProcess = selectedFile && selectedTasks.length > 0;
-                processButton.disabled = !canProcess;
-                processButton.textContent = canProcess ? 'Iniciar Processamento' : 'Selecione um arquivo e uma ação';
+                const isTaskSelected = selectedTask !== '';
+                const isEmailValid = selectedTask !== 'summary' || (emailInput.value.includes('@'));
+                const canProcess = selectedFile && isTaskSelected && isEmailValid;
+                
+                submitButton.disabled = !canProcess;
+                if (!selectedFile) submitButton.textContent = 'Selecione um arquivo';
+                else if (!isTaskSelected) submitButton.textContent = 'Escolha uma ação';
+                else if (!isEmailValid) submitButton.textContent = 'Informe um e-mail válido';
+                else submitButton.textContent = 'Iniciar Processamento';
             }
             
-            // Lógica de Envio
-            processButton.addEventListener('click', async () => {
+            // Lógica de Envio e Processamento
+            submitButton.addEventListener('click', async () => {
                 if (!selectedFile) return;
-
-                setupStage.classList.add('hidden');
+                uploadStage.classList.add('hidden');
                 processingStage.classList.remove('hidden');
                 statusText.textContent = 'Enviando arquivo para o servidor...';
 
-                const selectedTasks = Array.from(document.querySelectorAll('input[name="tasks"]:checked')).map(cb => cb.value);
                 const formData = new FormData();
                 formData.append('audio', selectedFile);
-                formData.append('tasks', JSON.stringify(selectedTasks));
+                formData.append('task', selectedTask);
+                if (selectedTask === 'summary') {
+                    formData.append('userEmail', emailInput.value);
+                }
 
                 try {
                     const response = await fetch(webhookUrl, { method: 'POST', body: formData });
-                    statusText.textContent = 'Aguardando a IA processar... (pode levar minutos)';
+                    statusText.textContent = 'Aguardando a IA processar o áudio...';
                     if (!response.ok) throw new Error(`Erro do servidor: ${response.status}`);
                     
-                    const results = await response.json();
-                    displayResults(results);
-
+                    if (selectedTask === 'transcribe') {
+                        const result = await response.json();
+                        if (result && result.transcricao) {
+                            resultText.value = result.transcricao;
+                            processingStage.classList.add('hidden');
+                            resultStage.classList.remove('hidden');
+                        } else {
+                           throw new Error('Resposta do servidor inválida.');
+                        }
+                    } else { // Tarefa de resumo
+                        // O n8n não precisa retornar nada, apenas um status 200 OK
+                        processingStage.classList.add('hidden');
+                        confirmationSection.classList.remove('hidden');
+                    }
                 } catch (error) {
-                    console.error('Falha no processo:', error);
+                    processingStage.classList.add('hidden');
+                    uploadStage.classList.remove('hidden');
                     alert(`Ocorreu um erro: ${error.message}`);
                     resetUI();
                 }
             });
-
-            function displayResults(results) {
-                processingStage.classList.add('hidden');
-                resultStage.classList.remove('hidden');
-                resultTabs.innerHTML = '';
-                resultContents.innerHTML = '';
-                
-                // Mapeia os nomes das chaves para nomes mais amigáveis
-                const friendlyNames = {
-                    "Transcricao_Completa": "Transcrição Completa",
-                    "Pontos_Chave": "Pontos Chave",
-                    "Resumo_Executivo": "Resumo Executivo"
-                };
-
-                // Garante que a transcrição, se existir, venha primeiro
-                const sortedKeys = Object.keys(results).sort((a, b) => {
-                    if (a === "Transcricao_Completa") return -1;
-                    if (b === "Transcricao_Completa") return 1;
-                    return 0;
-                });
-
-                sortedKeys.forEach((key, index) => {
-                    if (results[key]) { // Só cria a aba se houver conteúdo
-                        const tab = document.createElement('div');
-                        tab.className = 'tab' + (index === 0 ? ' active' : '');
-                        tab.textContent = friendlyNames[key] || key;
-                        tab.dataset.tab = key;
-                        resultTabs.appendChild(tab);
-
-                        const content = document.createElement('div');
-                        content.className = 'tab-content' + (index === 0 ? ' active' : '');
-                        content.id = `content-${key}`;
-                        const textArea = document.createElement('textarea');
-                        textArea.className = 'result-text-area';
-                        textArea.readOnly = true;
-                        textArea.value = results[key];
-                        content.appendChild(textArea);
-                        resultContents.appendChild(content);
-                    }
-                });
-
-                resultTabs.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('tab')) {
-                        const tabKey = e.target.dataset.tab;
-                        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                        e.target.classList.add('active');
-                        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                        document.getElementById(`content-${tabKey}`).classList.add('active');
-                    }
-                });
-            }
-
-            resetButton.addEventListener('click', resetUI);
-
-            function resetUI() {
+            
+            // Ações Finais
+            copyButton.addEventListener('click', () => {
+                navigator.clipboard.writeText(resultText.value);
+                copyButton.textContent = 'Copiado!';
+                setTimeout(() => { copyButton.textContent = 'Copiar Texto'; }, 2000);
+            });
+            
+            const resetUI = () => {
                 selectedFile = null;
+                selectedTask = '';
                 fileInput.value = '';
+                emailInput.value = '';
                 fileNameDisplay.classList.add('hidden');
                 taskOptions.classList.add('hidden');
-                setupStage.classList.remove('hidden');
-                processingStage.classList.add('hidden');
+                emailSection.classList.add('hidden');
+                document.querySelectorAll('.task-option').forEach(el => el.classList.remove('selected'));
+                document.querySelectorAll('input[name="task"]').forEach(radio => radio.checked = false);
                 resultStage.classList.add('hidden');
-                document.querySelectorAll('input[name="tasks"]').forEach(cb => cb.checked = false);
-                document.getElementById('task-transcribe').checked = true; // Deixa a transcrição marcada por padrão
+                confirmationSection.classList.add('hidden');
+                uploadStage.classList.remove('hidden');
                 validateForm();
-            }
+            };
+
+            resetButton.addEventListener('click', resetUI);
+            resetButton2.addEventListener('click', resetUI);
         });
     </script>
 </body>

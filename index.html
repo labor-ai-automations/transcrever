@@ -3,20 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Labor AI - Processador Inteligente de Áudio</title>
-    
-    <!-- Habilitar Cross-Origin Isolation para FFmpeg.wasm (ESSA É A CORREÇÃO) -->
-    <meta name="Cross-Origin-Opener-Policy" content="same-origin">
-    <meta name="Cross-Origin-Embedder-Policy" content="require-corp">
-
+    <title>Labor AI - Plataforma de Produtividade</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code&display=swap" rel="stylesheet">
     
-    <!-- FFmpeg.wasm - Carregado de forma assíncrona -->
-    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.min.js" defer></script>
-    <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/util.min.js" defer></script>
-    
     <style>
-        /* CSS Completo e Refinado */
+        /* CSS Completo e Refinado para a Plataforma */
         :root {
             --primary-color: #0d9488;
             --primary-hover: #0f766e;
@@ -37,17 +28,16 @@
         body { font-family: 'Inter', sans-serif; background-color: var(--content-bg); color: var(--text-primary); line-height: 1.6; }
 
         .app-layout { display: flex; height: 100vh; }
-        .sidebar { width: 260px; background-color: var(--sidebar-bg); color: var(--sidebar-text); padding: 24px; display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar { width: 260px; background-color: var(--sidebar-bg); color: var(--sidebar-text); padding: 24px; display: flex; flex-direction: column; flex-shrink: 0; transition: margin-left 0.3s ease; }
         .main-content { flex-grow: 1; padding: 40px; overflow-y: auto; }
 
         .sidebar-header { margin-bottom: 40px; }
         .logo { font-size: 24px; font-weight: 700; color: var(--sidebar-text-hover); }
         .logo-subtitle { font-size: 14px; color: var(--sidebar-text); }
 
-        .sidebar-nav a { display: flex; align-items: center; padding: 12px 16px; color: var(--sidebar-text); text-decoration: none; border-radius: 8px; margin-bottom: 8px; font-weight: 500; transition: all 0.2s ease; }
+        .sidebar-nav a { display: flex; align-items: center; padding: 12px 16px; color: var(--sidebar-text); text-decoration: none; border-radius: 8px; margin-bottom: 8px; font-weight: 500; transition: all 0.2s ease; cursor: pointer; }
         .sidebar-nav a:hover { background-color: rgba(255, 255, 255, 0.05); color: var(--sidebar-text-hover); }
         .sidebar-nav a.active { background-color: var(--sidebar-active-bg); color: var(--primary-color); font-weight: 700; }
-        .sidebar-nav a svg { margin-right: 12px; width: 20px; height: 20px; }
         .sidebar-footer { margin-top: auto; font-size: 12px; text-align: center; }
 
         .content-header { margin-bottom: 32px; }
@@ -89,36 +79,39 @@
 
         .hidden { display: none; }
 
-        /* Responsividade */
+        #menu-toggle { display: none; }
+        
         @media (max-width: 768px) {
             .app-layout { flex-direction: column; height: auto; }
             .sidebar { width: 100%; height: auto; position: static; flex-direction: row; justify-content: space-between; align-items: center; padding: 16px; }
             .sidebar-header .logo-subtitle { display: none; }
-            .sidebar-nav { display: flex; gap: 16px; }
+            .sidebar-nav { position: fixed; top: 0; left: -100%; background: var(--sidebar-bg); height: 100vh; width: 260px; flex-direction: column; padding-top: 80px; transition: left 0.3s ease; z-index: 100; }
+            .sidebar.open .sidebar-nav { left: 0; }
+            #menu-toggle { display: block; background: none; border: none; color: white; cursor: pointer; z-index: 101; }
             .sidebar-footer { display: none; }
             .main-content { padding: 24px; }
             .content-title { font-size: 24px; }
             .content-subtitle { font-size: 16px; }
         }
-
     </style>
 </head>
 <body>
 
     <div class="app-layout">
         <!-- Barra Lateral -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h1 class="logo">Labor AI</h1>
                 <p class="logo-subtitle">Produtividade Inteligente</p>
             </div>
-            <nav class="sidebar-nav">
+            <nav class="sidebar-nav" id="sidebar-nav">
                 <a href="#" class="nav-item active" data-page="processor">Transcrição & Resumo</a>
                 <a href="#" class="nav-item" data-page="account">Minha Conta</a>
             </nav>
             <div class="sidebar-footer">
                 <p>© 2024 Labor AI</p>
             </div>
+            <button id="menu-toggle">☰</button>
         </aside>
 
         <!-- Conteúdo Principal -->
@@ -126,22 +119,16 @@
             <div id="processor-page" class="page active">
                 <header class="content-header">
                     <h2 class="content-title">Processador Inteligente de Áudio</h2>
-                    <p class="content-subtitle">Una, comprima e analise seus áudios com IA avançada.</p>
+                    <p class="content-subtitle">Transcreva e analise seus áudios com a nossa IA avançada.</p>
                 </header>
 
                 <div class="card">
-                    <div id="upload-section">
+                    <div id="upload-stage">
                         <!-- Área de Upload -->
                         <div id="upload-area" class="upload-area">
-                            <p>Arraste seus áudios aqui ou clique para selecionar</p>
-                            <small>Você pode selecionar múltiplos arquivos para unir</small>
-                            <input type="file" id="file-input" multiple accept="audio/*" class="hidden">
-                        </div>
-
-                        <!-- Lista de Arquivos -->
-                        <div id="files-list-container" class="hidden">
-                            <h3>Arquivos Selecionados:</h3>
-                            <div id="files-list"></div>
+                            <p>Arraste seu áudio aqui ou clique para selecionar</p>
+                            <small>Formatos suportados: MP3, M4A, OGG, WAV, etc.</small>
+                            <input type="file" id="file-input" accept="audio/*" class="hidden">
                         </div>
 
                         <!-- Opções de Tarefa -->
@@ -164,7 +151,7 @@
                         </div>
 
                         <!-- Botão de Processamento -->
-                        <button id="process-button" disabled>Carregando motor de áudio...</button>
+                        <button id="process-button" disabled>Selecione um arquivo para começar</button>
                     </div>
 
                     <!-- Status -->
@@ -204,59 +191,25 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            let ffmpeg;
-            let ffmpegLoaded = false;
-            let selectedFiles = [];
+            let selectedFile = null;
             let selectedTask = '';
 
             // Seletores de Elementos
             const uploadArea = document.getElementById('upload-area');
             const fileInput = document.getElementById('file-input');
-            const filesListContainer = document.getElementById('files-list-container');
-            const filesList = document.getElementById('files-list');
             const taskOptions = document.getElementById('task-options');
             const emailSection = document.getElementById('email-section');
             const processButton = document.getElementById('process-button');
             const statusContainer = document.getElementById('status-container');
             const statusText = document.getElementById('status-text');
-            const uploadSection = document.getElementById('upload-section');
+            const uploadStage = document.getElementById('upload-stage');
             const resultSection = document.getElementById('result-section');
             const resultText = document.getElementById('result-text');
             const confirmationSection = document.getElementById('confirmation-section');
             const copyButton = document.getElementById('copy-button');
             const resetButton = document.getElementById('reset-button');
             const resetButton2 = document.getElementById('reset-button-2');
-            
             const webhookUrl = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/a7afa173-d939-46f8-80d7-0e2a9845c928';
-
-            // Carregar FFmpeg de forma segura
-            const safeLoadFFmpeg = async () => {
-                if (typeof FFmpegWASM === 'undefined') {
-                    setTimeout(safeLoadFFmpeg, 100);
-                    return;
-                }
-                
-                statusText.textContent = 'Carregando motor de áudio...';
-                statusContainer.classList.remove('hidden');
-                
-                try {
-                    const { FFmpeg } = FFmpegWASM;
-                    ffmpeg = new FFmpeg();
-                    await ffmpeg.load({
-                        coreURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js"
-                    });
-                    ffmpegLoaded = true;
-                    console.log('FFmpeg carregado.');
-                    statusContainer.classList.add('hidden');
-                    processButton.textContent = 'Selecione um arquivo para começar';
-                    validateForm();
-                } catch (error) {
-                    console.error('Falha ao carregar FFmpeg:', error);
-                    processButton.textContent = 'Erro ao carregar motor de áudio';
-                    statusText.textContent = 'Erro ao carregar o motor de áudio. Tente recarregar a página.';
-                }
-            };
-            safeLoadFFmpeg();
 
             // Eventos de Upload
             uploadArea.addEventListener('click', () => fileInput.click());
@@ -265,45 +218,18 @@
             uploadArea.addEventListener('drop', (e) => {
                 e.preventDefault();
                 uploadArea.classList.remove('dragover');
-                handleFiles(e.dataTransfer.files);
+                if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
             });
-            fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) handleFile(e.target.files[0]);
+            });
 
-            function handleFiles(files) {
-                selectedFiles = Array.from(files);
-                renderFilesList();
+            function handleFile(file) {
+                selectedFile = file;
+                uploadArea.querySelector('p').textContent = `Arquivo Selecionado: ${file.name}`;
+                taskOptions.classList.remove('hidden');
                 validateForm();
             }
-
-            function renderFilesList() {
-                filesList.innerHTML = '';
-                if (selectedFiles.length > 0) {
-                    selectedFiles.forEach((file, index) => {
-                        const fileElement = document.createElement('div');
-                        fileElement.className = 'file-item';
-                        fileElement.innerHTML = `
-                            <span>${file.name}</span>
-                            <button class="remove-file-btn" data-index="${index}">×</button>
-                        `;
-                        filesList.appendChild(fileElement);
-                    });
-                    filesListContainer.classList.remove('hidden');
-                    taskOptions.classList.remove('hidden');
-                } else {
-                    filesListContainer.classList.add('hidden');
-                    taskOptions.classList.add('hidden');
-                    emailSection.classList.add('hidden');
-                }
-            }
-            
-            filesList.addEventListener('click', (e) => {
-                if (e.target.classList.contains('remove-file-btn')) {
-                    const index = parseInt(e.target.dataset.index, 10);
-                    selectedFiles.splice(index, 1);
-                    renderFilesList();
-                    validateForm();
-                }
-            });
 
             // Eventos de Opções de Tarefa
             document.querySelectorAll('.task-option').forEach(option => {
@@ -318,18 +244,13 @@
             });
 
             function validateForm() {
-                if (!ffmpegLoaded) {
-                    processButton.disabled = true;
-                    return;
-                }
-
                 const isTaskSelected = selectedTask !== '';
                 const isEmailValid = selectedTask !== 'resumir_reuniao' || (document.getElementById('email-input').value && document.getElementById('email-input').value.includes('@'));
-                const canProcess = selectedFiles.length > 0 && isTaskSelected && isEmailValid;
+                const canProcess = selectedFile && isTaskSelected && isEmailValid;
                 
                 processButton.disabled = !canProcess;
-                if (selectedFiles.length === 0) {
-                    processButton.textContent = 'Selecione um ou mais arquivos';
+                if (!selectedFile) {
+                    processButton.textContent = 'Selecione um arquivo para começar';
                 } else if (!isTaskSelected) {
                     processButton.textContent = 'Escolha uma ação';
                 } else if (!isEmailValid) {
@@ -342,46 +263,25 @@
 
             // Processamento Principal
             processButton.addEventListener('click', async () => {
-                uploadSection.classList.add('hidden');
+                uploadStage.classList.add('hidden');
                 statusContainer.classList.remove('hidden');
                 processButton.disabled = true;
 
+                statusText.textContent = 'Enviando arquivo para o servidor...';
+                
                 try {
-                    const { fetchFile } = FFmpegUtil;
-                    let processedFile;
-
-                    if (selectedFiles.length > 1) {
-                        statusText.textContent = `Unindo ${selectedFiles.length} arquivos...`;
-                        const fileNames = [];
-                        for (let i = 0; i < selectedFiles.length; i++) {
-                            const name = `input${i}`;
-                            await ffmpeg.writeFile(name, await fetchFile(selectedFiles[i]));
-                            fileNames.push(`file '${name}'`);
-                        }
-                        await ffmpeg.writeFile('list.txt', fileNames.join('\n'));
-                        await ffmpeg.exec(['-f', 'concat', '-safe', '0', '-i', 'list.txt', 'merged.mp3']);
-                        const data = await ffmpeg.readFile('merged.mp3');
-                        processedFile = new File([data], 'merged_audio.mp3', { type: 'audio/mpeg' });
-                    } else {
-                        processedFile = selectedFiles[0];
-                    }
-
-                    statusText.textContent = 'Comprimindo áudio para otimizar envio...';
-                    await ffmpeg.writeFile('input.file', await fetchFile(processedFile));
-                    await ffmpeg.exec(['-i', 'input.file', '-b:a', '64k', '-vn', '-ar', '16000', 'output.mp3']);
-                    const finalData = await ffmpeg.readFile('output.mp3');
-                    const finalFile = new File([finalData], 'optimized_audio.mp3', { type: 'audio/mpeg' });
-
-                    statusText.textContent = 'Enviando para a IA da Labor AI...';
                     const formData = new FormData();
-                    formData.append('audioFile', finalFile);
+                    formData.append('audio', selectedFile); // Nome do campo é 'audio'
                     formData.append('task', selectedTask);
                     if (selectedTask === 'resumir_reuniao') {
                         formData.append('userEmail', document.getElementById('email-input').value);
                     }
                     
                     const response = await fetch(webhookUrl, { method: 'POST', body: formData });
-                    if (!response.ok) throw new Error('Falha no envio para o servidor.');
+                    
+                    statusText.textContent = 'Processando na IA (isso pode levar alguns minutos)...';
+
+                    if (!response.ok) throw new Error('Falha na resposta do servidor.');
                     
                     if (selectedTask === 'transcricao_simples') {
                         const result = await response.json();
@@ -395,20 +295,22 @@
 
                 } catch (error) {
                     console.error(error);
-                    statusText.textContent = `Erro: ${error.message}`;
+                    statusText.textContent = `Erro: ${error.message}. Tente novamente.`;
                 }
             });
 
             // Ações de Reset e Cópia
             const resetApp = () => {
-                selectedFiles = [];
+                selectedFile = null;
                 selectedTask = '';
-                renderFilesList();
-                uploadSection.classList.remove('hidden');
+                uploadStage.classList.remove('hidden');
                 resultSection.classList.add('hidden');
                 confirmationSection.classList.add('hidden');
+                statusContainer.classList.add('hidden');
                 document.querySelectorAll('input[name="task"]').forEach(rb => rb.checked = false);
                 document.querySelectorAll('.task-option').forEach(el => el.classList.remove('selected'));
+                uploadArea.querySelector('p').textContent = 'Arraste seu áudio aqui ou clique para selecionar';
+                fileInput.value = ''; // Limpa a seleção de arquivo
                 validateForm();
             };
             
@@ -423,21 +325,29 @@
 
             function formatTranscription(text) {
                 if (!text) return '';
-                // Adiciona quebra de linha após pontuação final, se seguida por espaço e letra maiúscula.
+                // Adiciona quebra de linha dupla após pontuação final, se seguida por espaço e letra maiúscula.
                 return text.replace(/([.!?])\s+(?=[A-Z])/g, '$1\n\n');
             }
 
             // Navegação entre páginas (simulada)
-            document.querySelectorAll('.nav-item').forEach(link => {
+            const navLinks = document.querySelectorAll('.nav-item');
+            const pages = document.querySelectorAll('.page');
+            navLinks.forEach(link => {
                 link.addEventListener('click', e => {
                     e.preventDefault();
                     const pageId = link.dataset.page;
-                    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                    pages.forEach(p => p.classList.remove('active'));
                     document.getElementById(`${pageId}-page`).classList.add('active');
-                    document.querySelectorAll('.nav-item').forEach(l => l.classList.remove('active'));
+                    navLinks.forEach(l => l.classList.remove('active'));
                     link.classList.add('active');
                 });
             });
+
+            // Menu Mobile
+            const menuToggle = document.getElementById('menu-toggle');
+            const sidebar = document.getElementById('sidebar');
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+
         });
     </script>
 

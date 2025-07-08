@@ -49,10 +49,6 @@
         .upload-area { border: 2px dashed var(--border-color); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.2s ease; }
         .upload-area:hover, .upload-area.dragover { border-color: var(--primary-color); background-color: #f0fdfa; }
         
-        #files-list-container { margin-top: 24px; }
-        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; background-color: #f8f8f8; border-radius: 6px; margin-bottom: 8px; }
-        .remove-file-btn { background: none; border: none; color: var(--error-color); cursor: pointer; font-size: 18px; }
-
         .task-options { margin-top: 24px; }
         .task-option { padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; }
         .task-option input[type="radio"] { margin-right: 12px; }
@@ -87,7 +83,7 @@
             .sidebar-header .logo-subtitle { display: none; }
             .sidebar-nav { position: fixed; top: 0; left: -100%; background: var(--sidebar-bg); height: 100vh; width: 260px; flex-direction: column; padding-top: 80px; transition: left 0.3s ease; z-index: 100; }
             .sidebar.open .sidebar-nav { left: 0; }
-            #menu-toggle { display: block; background: none; border: none; color: white; cursor: pointer; z-index: 101; }
+            #menu-toggle { display: block; background: none; border: none; color: white; cursor: pointer; z-index: 101; font-size: 24px; }
             .sidebar-footer { display: none; }
             .main-content { padding: 24px; }
             .content-title { font-size: 24px; }
@@ -100,14 +96,16 @@
     <div class="app-layout">
         <!-- Barra Lateral -->
         <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <h1 class="logo">Labor AI</h1>
-                <p class="logo-subtitle">Produtividade Inteligente</p>
+            <div>
+                <div class="sidebar-header">
+                    <h1 class="logo">Labor AI</h1>
+                    <p class="logo-subtitle">Produtividade Inteligente</p>
+                </div>
+                <nav class="sidebar-nav" id="sidebar-nav">
+                    <a href="#" class="nav-item active" data-page="processor">Transcrição & Resumo</a>
+                    <a href="#" class="nav-item" data-page="account">Minha Conta</a>
+                </nav>
             </div>
-            <nav class="sidebar-nav" id="sidebar-nav">
-                <a href="#" class="nav-item active" data-page="processor">Transcrição & Resumo</a>
-                <a href="#" class="nav-item" data-page="account">Minha Conta</a>
-            </nav>
             <div class="sidebar-footer">
                 <p>© 2024 Labor AI</p>
             </div>
@@ -211,7 +209,7 @@
             const resetButton2 = document.getElementById('reset-button-2');
             const webhookUrl = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/a7afa173-d939-46f8-80d7-0e2a9845c928';
 
-            // Eventos de Upload
+            // --- Eventos da Interface ---
             uploadArea.addEventListener('click', () => fileInput.click());
             uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
             uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
@@ -223,15 +221,7 @@
             fileInput.addEventListener('change', (e) => {
                 if (e.target.files.length > 0) handleFile(e.target.files[0]);
             });
-
-            function handleFile(file) {
-                selectedFile = file;
-                uploadArea.querySelector('p').textContent = `Arquivo Selecionado: ${file.name}`;
-                taskOptions.classList.remove('hidden');
-                validateForm();
-            }
-
-            // Eventos de Opções de Tarefa
+            
             document.querySelectorAll('.task-option').forEach(option => {
                 option.addEventListener('click', () => {
                     selectedTask = option.dataset.task;
@@ -242,6 +232,20 @@
                     validateForm();
                 });
             });
+            
+            document.getElementById('email-input').addEventListener('input', validateForm);
+            processButton.addEventListener('click', processRequest);
+            resetButton.addEventListener('click', resetApp);
+            resetButton2.addEventListener('click', resetApp);
+            copyButton.addEventListener('click', copyToClipboard);
+
+            // --- Funções de Lógica ---
+            function handleFile(file) {
+                selectedFile = file;
+                uploadArea.querySelector('p').textContent = `Arquivo Selecionado: ${file.name}`;
+                taskOptions.classList.remove('hidden');
+                validateForm();
+            }
 
             function validateForm() {
                 const isTaskSelected = selectedTask !== '';
@@ -259,19 +263,17 @@
                     processButton.textContent = 'Iniciar Processamento';
                 }
             }
-            document.getElementById('email-input').addEventListener('input', validateForm);
 
-            // Processamento Principal
-            processButton.addEventListener('click', async () => {
+            async function processRequest() {
+                // Esconder formulário e mostrar status
                 uploadStage.classList.add('hidden');
                 statusContainer.classList.remove('hidden');
                 processButton.disabled = true;
-
                 statusText.textContent = 'Enviando arquivo para o servidor...';
                 
                 try {
                     const formData = new FormData();
-                    formData.append('audio', selectedFile); // Nome do campo é 'audio'
+                    formData.append('audio', selectedFile); 
                     formData.append('task', selectedTask);
                     if (selectedTask === 'resumir_reuniao') {
                         formData.append('userEmail', document.getElementById('email-input').value);
@@ -281,26 +283,41 @@
                     
                     statusText.textContent = 'Processando na IA (isso pode levar alguns minutos)...';
 
-                    if (!response.ok) throw new Error('Falha na resposta do servidor.');
+                    if (!response.ok) {
+                        const errorDetails = await response.text();
+                        throw new Error(`Falha na resposta do servidor: ${response.status}. Detalhes: ${errorDetails}`);
+                    }
+                    
+                    const result = await response.json();
                     
                     if (selectedTask === 'transcricao_simples') {
-                        const result = await response.json();
-                        resultText.value = formatTranscription(result.transcricao);
-                        statusContainer.classList.add('hidden');
-                        resultSection.classList.remove('hidden');
-                    } else {
-                        statusContainer.classList.add('hidden');
-                        confirmationSection.classList.remove('hidden');
+                        if (result && result.hasOwnProperty('transcricao')) {
+                            showTranscriptionResult(result.transcricao);
+                        } else {
+                            throw new Error('A resposta do servidor não continha o campo "transcricao".');
+                        }
+                    } else { // Tarefa de resumo
+                        showConfirmationMessage();
                     }
 
                 } catch (error) {
                     console.error(error);
                     statusText.textContent = `Erro: ${error.message}. Tente novamente.`;
                 }
-            });
+            }
 
-            // Ações de Reset e Cópia
-            const resetApp = () => {
+            function showTranscriptionResult(text) {
+                resultText.value = formatTranscription(text);
+                statusContainer.classList.add('hidden');
+                resultSection.classList.remove('hidden');
+            }
+
+            function showConfirmationMessage() {
+                statusContainer.classList.add('hidden');
+                confirmationSection.classList.remove('hidden');
+            }
+
+            function resetApp() {
                 selectedFile = null;
                 selectedTask = '';
                 uploadStage.classList.remove('hidden');
@@ -310,23 +327,22 @@
                 document.querySelectorAll('input[name="task"]').forEach(rb => rb.checked = false);
                 document.querySelectorAll('.task-option').forEach(el => el.classList.remove('selected'));
                 uploadArea.querySelector('p').textContent = 'Arraste seu áudio aqui ou clique para selecionar';
-                fileInput.value = ''; // Limpa a seleção de arquivo
+                fileInput.value = '';
+                document.getElementById('email-input').value = '';
+                emailSection.classList.add('hidden');
                 validateForm();
-            };
-            
-            resetButton.addEventListener('click', resetApp);
-            resetButton2.addEventListener('click', resetApp);
-            
-            copyButton.addEventListener('click', () => {
+            }
+
+            function copyToClipboard() {
                 navigator.clipboard.writeText(resultText.value);
                 copyButton.textContent = 'Copiado!';
                 setTimeout(() => { copyButton.textContent = 'Copiar Texto'; }, 2000);
-            });
+            }
 
             function formatTranscription(text) {
                 if (!text) return '';
                 // Adiciona quebra de linha dupla após pontuação final, se seguida por espaço e letra maiúscula.
-                return text.replace(/([.!?])\s+(?=[A-Z])/g, '$1\n\n');
+                return text.replace(/([.!?])\s+(?=[A-ZÀ-Ú])/g, '$1\n\n');
             }
 
             // Navegação entre páginas (simulada)
@@ -346,8 +362,11 @@
             // Menu Mobile
             const menuToggle = document.getElementById('menu-toggle');
             const sidebar = document.getElementById('sidebar');
-            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
-
+            const sidebarNav = document.getElementById('sidebar-nav');
+            menuToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+                sidebarNav.classList.toggle('open');
+            });
         });
     </script>
 

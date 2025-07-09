@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Labor AI - Transcritor Simples</title>
+    <title>Labor AI - Processador de Áudio</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Fira+Code&display=swap" rel="stylesheet">
     
     <style>
@@ -37,36 +37,49 @@
             border-radius: 16px;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
             width: 100%;
-            max-width: 800px;
+            max-width: 600px; /* Reduzido para uma aparência mais compacta */
             text-align: center;
             padding: 40px;
         }
 
-        .header h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
-        .header p { font-size: 18px; color: var(--text-secondary); margin-bottom: 32px; }
+        .header h1 { font-size: 30px; font-weight: 700; margin-bottom: 8px; }
+        .header p { font-size: 16px; color: var(--text-secondary); margin-bottom: 32px; }
 
-        #drop-area { border: 2px dashed var(--border-color); border-radius: 12px; padding: 48px; cursor: pointer; transition: all 0.2s ease; }
-        #drop-area:hover, #drop-area.dragover { border-color: var(--primary-color); background-color: #f0fdfa; }
+        .file-input-group { text-align: left; margin-bottom: 24px; }
+        .file-input-label { display: block; margin-bottom: 8px; font-weight: 500; }
+        .file-input-wrapper { display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 12px; cursor: pointer; background-color: #fcfcfc; }
+        .file-input-wrapper:hover { border-color: var(--primary-color); }
+        .file-input-wrapper input[type="file"] { display: none; }
+        .file-input-wrapper span { flex-grow: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .file-input-button { background-color: var(--text-secondary); color: white; border: none; border-radius: 6px; padding: 8px 12px; margin-left: 10px; font-size: 14px; cursor: pointer; }
 
-        #file-name { margin-top: 16px; font-weight: 500; color: var(--primary-color); }
+        .task-options { margin-bottom: 24px; text-align: left; }
+        .task-option { margin-bottom: 12px; display: flex; align-items: center; }
+        .task-option input[type="checkbox"] { margin-right: 10px; transform: scale(1.1); }
+        .task-option label { font-weight: 500; }
 
-        .task-option { padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; }
-        .task-option input[type="checkbox"] { margin-right: 12px; transform: scale(1.2); }
-        .task-option label { flex-grow: 1; text-align: left; }
-        .task-option.selected { border-color: var(--primary-color); background-color: #f0fdfa; }
-        
-        #submit-button { width: 100%; padding: 16px; margin-top: 24px; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; }
+        #email-section { margin-top: 24px; text-align: left; display: none; }
+        #email-section label { display: block; margin-bottom: 8px; font-weight: 500; }
+        #email-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; }
+
+        #submit-button { width: 100%; padding: 14px; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; }
+        #submit-button:hover:not(:disabled) { background-color: var(--primary-hover); box-shadow: 0 4px 14px rgba(13, 148, 136, 0.3); }
         #submit-button:disabled { background-color: #a5b0b8; cursor: not-allowed; }
 
-        #processing-stage .spinner { width: 48px; height: 48px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 24px auto; }
+        #processing-stage { text-align: center; }
+        #processing-stage .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 24px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #status-text { margin-top: 24px; font-weight: 500; color: var(--text-secondary); }
+        #status-text { font-weight: 500; color: var(--text-secondary); margin-top: 16px; }
 
         #result-stage { text-align: left; margin-top: 32px; }
-        #result-container { padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; background-color: #f9fafb; font-family: 'Fira Code', monospace; line-height: 1.7; white-space: pre-wrap; font-size: 15px; }
-        .result-section-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; color: var(--primary-color); }
-        .result-section-content { margin-bottom: 24px; }
-        .result-actions { margin-top: 24px; display: flex; gap: 16px; }
+        #result-container { padding: 20px; border: 1px solid var(--border-color); border-radius: 12px; background-color: #f9fafb; font-family: 'Fira Code', monospace; line-height: 1.7; white-space: pre-wrap; font-size: 15px; min-height: 150px; overflow-y: auto; max-height: 500px; }
+        
+        .result-section-title { font-size: 18px; font-weight: 700; color: var(--primary-color); margin-bottom: 12px; margin-top: 24px; }
+        .result-section-title:first-child { margin-top: 0; }
+        
+        .result-actions { margin-top: 24px; display: flex; gap: 12px; }
+        .button { flex-grow: 1; padding: 10px 15px; border-radius: 8px; border: none; font-weight: 500; cursor: pointer; }
+        .btn-reset { background-color: var(--text-secondary); color: white; }
 
         .footer { margin-top: 40px; font-size: 14px; color: var(--text-secondary); }
         .hidden { display: none; }
@@ -76,49 +89,56 @@
 
     <div class="container">
         <header class="header">
-            <h1>Transcritor Inteligente</h1>
-            <p>Envie seu áudio e escolha as ações que a IA da Labor AI deve executar.</p>
+            <h1>Processador de Áudio</h1>
+            <p>Selecione seu áudio e as ações que a IA da Labor AI deve executar.</p>
         </header>
 
         <!-- ETAPA 1: UPLOAD E CONFIGURAÇÃO -->
         <div id="setup-stage">
-            <input type="file" id="file-input" class="hidden" accept="audio/*">
-            <div id="drop-area">
-                <p>Arraste e solte seu áudio aqui ou clique para selecionar</p>
-                <small>Formatos: MP3, M4A, OGG, WAV, etc.</small>
+            <div class="file-input-group">
+                <label for="file-input" class="file-input-label">Arquivo de Áudio:</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="file-input" accept="audio/*">
+                    <span id="selected-file-name">Nenhum arquivo selecionado</span>
+                    <button class="file-input-button" onclick="document.getElementById('file-input').click()">Escolher</button>
+                </div>
             </div>
-            <p id="file-name" class="hidden"></p>
 
-            <div id="task-options" class="task-options hidden">
+            <div id="task-options" class="task-options">
                 <h4>Ações Desejadas:</h4>
-                <div class="task-option" data-task="transcribe">
+                <div class="task-option">
                     <input type="checkbox" id="task-transcribe" name="tasks" value="transcribe" checked>
                     <label for="task-transcribe">Transcrição Completa</label>
                 </div>
-                <div class="task-option" data-task="bullets">
+                <div class="task-option">
                     <input type="checkbox" id="task-bullets" name="tasks" value="bullets">
-                    <label for="task-bullets">Gerar Pontos Chave (Bullet Points)</label>
+                    <label for="task-bullets">Gerar Pontos Chave</label>
                 </div>
-                <div class="task-option" data-task="summary">
+                <div class="task-option">
                     <input type="checkbox" id="task-summary" name="tasks" value="summary">
                     <label for="task-summary">Criar Resumo Executivo</label>
                 </div>
             </div>
 
-            <button id="submit-button" disabled>Selecione um arquivo</button>
+            <div id="email-section" class="hidden">
+                <h4>Seu e-mail (para receber o resumo):</h4>
+                <input type="email" id="email-input" placeholder="seu@email.com">
+            </div>
+
+            <button id="submit-button" disabled>Selecione um arquivo e uma ação</button>
         </div>
 
         <!-- ETAPA 2: PROCESSANDO -->
         <div id="processing-stage" class="hidden">
             <div class="spinner"></div>
-            <p id="status-text">Iniciando...</p>
+            <p id="status-text">Processando...</p>
         </div>
 
         <!-- ETAPA 3: RESULTADOS -->
         <div id="result-stage" class="hidden">
             <div id="result-container"></div>
             <div class="result-actions">
-                <button id="reset-button">Processar Outro</button>
+                <button id="reset-button" class="button btn-reset">Processar Outro</button>
             </div>
         </div>
     </div>
@@ -133,10 +153,11 @@
             const setupStage = document.getElementById('setup-stage');
             const processingStage = document.getElementById('processing-stage');
             const resultStage = document.getElementById('result-stage');
-            const dropArea = document.getElementById('drop-area');
             const fileInput = document.getElementById('file-input');
-            const fileNameDisplay = document.getElementById('file-name');
+            const selectedFileNameDisplay = document.getElementById('selected-file-name');
             const taskOptions = document.getElementById('task-options');
+            const emailSection = document.getElementById('email-section');
+            const emailInput = document.getElementById('email-input');
             const submitButton = document.getElementById('submit-button');
             const statusText = document.getElementById('status-text');
             const resultContainer = document.getElementById('result-container');
@@ -144,36 +165,45 @@
             
             let selectedFile = null;
 
-            // Lógica de Upload
-            dropArea.addEventListener('click', () => fileInput.click());
-            dropArea.addEventListener('dragover', (e) => { e.preventDefault(); dropArea.classList.add('dragover'); });
-            dropArea.addEventListener('dragleave', () => dropArea.classList.remove('dragover'));
-            dropArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropArea.classList.remove('dragover');
-                if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-            });
+            // Lógica de Upload e Seleção
             fileInput.addEventListener('change', () => {
-                if (fileInput.files.length) handleFile(e.target.files[0]);
+                if (fileInput.files.length) {
+                    selectedFile = fileInput.files[0];
+                    selectedFileNameDisplay.textContent = selectedFile.name;
+                    validateForm();
+                } else {
+                    selectedFile = null;
+                    selectedFileNameDisplay.textContent = 'Nenhum arquivo selecionado';
+                    validateForm();
+                }
             });
-
-            function handleFile(file) {
-                selectedFile = file;
-                fileNameDisplay.textContent = `Arquivo selecionado: ${file.name}`;
-                fileNameDisplay.classList.remove('hidden');
-                taskOptions.classList.remove('hidden');
-                validateForm();
-            }
-
+            
+            // Lógica de Seleção de Tarefa
             document.querySelectorAll('input[name="tasks"]').forEach(checkbox => {
-                checkbox.addEventListener('change', validateForm);
+                checkbox.addEventListener('change', () => {
+                    const isSummaryChecked = document.getElementById('task-summary').checked;
+                    emailSection.classList.toggle('hidden', !isSummaryChecked);
+                    validateForm();
+                });
             });
+
+            emailInput.addEventListener('input', validateForm);
             
             function validateForm() {
                 const selectedTasks = Array.from(document.querySelectorAll('input[name="tasks"]:checked'));
-                const canProcess = selectedFile && selectedTasks.length > 0;
+                const isEmailValid = !document.getElementById('task-summary').checked || (emailInput.value.includes('@') && emailInput.value.length > 5);
+                const canProcess = selectedFile && selectedTasks.length > 0 && isEmailValid;
+                
                 submitButton.disabled = !canProcess;
-                submitButton.textContent = canProcess ? 'Iniciar Processamento' : 'Selecione um arquivo e uma ação';
+                if (!selectedFile) {
+                    submitButton.textContent = 'Selecione um arquivo';
+                } else if (selectedTasks.length === 0) {
+                    submitButton.textContent = 'Escolha pelo menos uma ação';
+                } else if (!isEmailValid) {
+                    submitButton.textContent = 'Informe um e-mail válido';
+                } else {
+                    submitButton.textContent = 'Iniciar Processamento';
+                }
             }
             
             // Lógica de Envio e Processamento
@@ -189,10 +219,14 @@
                 formData.append('audio', selectedFile);
                 formData.append('tasks', JSON.stringify(selectedTasks)); // Envia um JSON string
 
+                if (document.getElementById('task-summary').checked) {
+                    formData.append('userEmail', emailInput.value);
+                }
+
                 try {
                     const response = await fetch(webhookUrl, { method: 'POST', body: formData });
                     statusText.textContent = 'Aguardando a IA processar... (pode levar minutos)';
-                    if (!response.ok) throw new Error(`Erro do servidor: ${response.status}`);
+                    if (!response.ok) throw new Error(`Erro do servidor: ${response.status}. Por favor, tente novamente.`);
                     
                     const results = await response.json(); // Pega a resposta do n8n
                     displayResults(results);
@@ -208,71 +242,78 @@
                 processingStage.classList.add('hidden');
                 resultStage.classList.remove('hidden');
                 resultContainer.innerHTML = ''; // Limpa resultados anteriores
-
+                
                 const displayOrder = ["Transcricao_Completa", "Pontos_Chave", "Resumo_Executivo"];
                 
                 displayOrder.forEach(key => {
                     const contentValue = results[key]; // Pega o valor diretamente do resultado
-
-                    if (contentValue) { // Só exibe se o valor existir (não for null ou undefined)
-                        const sectionTitle = document.createElement('h3');
+                    
+                    if (contentValue) { // Só exibe se o valor existir (não for null, undefined ou string vazia)
+                        const sectionTitle = document.createElement('div');
                         sectionTitle.className = 'result-section-title';
                         
+                        const textArea = document.createElement('textarea');
+                        textArea.className = 'result-text-area';
+                        textArea.readOnly = true;
+                        
                         let sectionText = '';
+                        let titleText = '';
 
-                        // Verifica o tipo de conteúdo para exibir corretamente
                         if (key === "Transcricao_Completa") {
-                            sectionTitle.textContent = "Transcrição Completa";
+                            titleText = "Transcrição Completa";
                             sectionText = formatTranscription(contentValue); // Formata transcrição
                         } else if (key === "Pontos_Chave") {
-                            sectionTitle.textContent = "Pontos Chave";
-                            sectionText = contentValue; // O texto já vem formatado da IA
+                            titleText = "Pontos Chave";
+                            sectionText = contentValue; 
                         } else if (key === "Resumo_Executivo") {
-                            sectionTitle.textContent = "Resumo Executivo";
-                            sectionText = contentValue; // O texto já vem formatado da IA
+                            titleText = "Resumo Executivo";
+                            sectionText = contentValue;
                         }
 
-                        if (sectionText) { // Garante que há texto para exibir
-                            const contentDiv = document.createElement('div');
-                            contentDiv.className = 'result-section-content';
-                            contentDiv.innerHTML = `
-                                <div class="result-section-title">${sectionTitle.textContent}</div>
-                                <textarea class="result-text-area" readonly>${sectionText}</textarea>
-                                <button class="button btn-copy" onclick="copyText(this)">Copiar</button>
-                            `;
-                            resultContainer.appendChild(contentDiv);
-                        }
+                        sectionTitle.textContent = titleText;
+                        textArea.value = sectionText;
+
+                        // Adiciona a seção ao container
+                        const sectionDiv = document.createElement('div');
+                        sectionDiv.appendChild(sectionTitle);
+                        sectionDiv.appendChild(textArea);
+                        resultContainer.appendChild(sectionDiv);
+                        
+                        // Adiciona botão Copiar para cada seção
+                        const copyButton = document.createElement('button');
+                        copyButton.className = 'button';
+                        copyButton.textContent = 'Copiar';
+                        copyButton.onclick = () => {
+                            navigator.clipboard.writeText(textArea.value);
+                            copyButton.textContent = 'Copiado!';
+                            setTimeout(() => { copyButton.textContent = 'Copiar'; }, 2000);
+                        };
+                        sectionDiv.appendChild(copyButton); // Adiciona o botão de copiar a cada seção
                     }
                 });
 
                 if (resultContainer.innerHTML === '') {
-                    resultContainer.innerHTML = '<p>Nenhum resultado foi gerado para as tarefas selecionadas.</p>';
+                    resultContainer.innerHTML = '<p style="margin-top: 20px; color: var(--text-secondary);">Nenhum resultado foi gerado para as tarefas selecionadas.</p>';
                 }
             }
 
-            // Funções de Utilitário
+            // Funções Auxiliares
             function formatTranscription(text) {
                 if (!text) return '';
-                // Adiciona quebra de linha dupla após pontuação final, se seguida por espaço e letra maiúscula.
                 return text.replace(/([.!?])\s+(?=[A-ZÀ-Ú])/g, '$1\n\n');
-            }
-
-            function copyText(buttonElement) {
-                const textArea = buttonElement.previousElementSibling;
-                navigator.clipboard.writeText(textArea.value);
-                buttonElement.textContent = 'Copiado!';
-                setTimeout(() => { buttonElement.textContent = 'Copiar'; }, 2000);
             }
 
             const resetUI = () => {
                 selectedFile = null;
                 fileInput.value = '';
-                fileNameDisplay.classList.add('hidden');
-                taskOptions.classList.add('hidden');
+                selectedFileNameDisplay.textContent = 'Nenhum arquivo selecionado';
+                taskOptions.classList.remove('hidden');
+                emailSection.classList.add('hidden'); // Esconde email
+                emailInput.value = ''; // Limpa email
                 setupStage.classList.remove('hidden');
                 processingStage.classList.add('hidden');
                 resultStage.classList.add('hidden');
-                resultContainer.innerHTML = ''; // Limpa resultados anteriores
+                resultContainer.innerHTML = '';
                 document.querySelectorAll('input[name="tasks"]').forEach(cb => {
                     cb.checked = (cb.id === 'task-transcribe'); // Marca "Transcrição Completa" por padrão
                 });

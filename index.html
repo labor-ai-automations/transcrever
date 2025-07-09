@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Labor AI - Processador de Áudio</title>
+    <title>Processador Avançado de Áudio | Labor AI</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Fira+Code&display=swap" rel="stylesheet">
     
     <style>
+        /* Variáveis CSS */
         :root {
             --primary-color: #0d9488;
             --primary-hover: #0f766e;
@@ -18,8 +19,10 @@
             --success-color: #16a34a;
         }
 
+        /* Reset Básico */
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        /* Estilos do Body */
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--background-color);
@@ -32,53 +35,54 @@
             padding: 20px;
         }
 
+        /* Container Principal */
         .container {
             background-color: var(--card-bg);
             border-radius: 16px;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
             width: 100%;
-            max-width: 600px; /* Reduzido para uma aparência mais compacta */
+            max-width: 800px; /* Aumentado para mais espaço no texto */
             text-align: center;
             padding: 40px;
         }
 
-        .header h1 { font-size: 30px; font-weight: 700; margin-bottom: 8px; }
-        .header p { font-size: 16px; color: var(--text-secondary); margin-bottom: 32px; }
+        /* Cabeçalho */
+        .header h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        .header p { font-size: 18px; color: var(--text-secondary); margin-bottom: 32px; }
 
-        .file-input-group { text-align: left; margin-bottom: 24px; }
-        .file-input-label { display: block; margin-bottom: 8px; font-weight: 500; }
-        .file-input-wrapper { display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 12px; cursor: pointer; background-color: #fcfcfc; }
-        .file-input-wrapper:hover { border-color: var(--primary-color); }
-        .file-input-wrapper input[type="file"] { display: none; }
-        .file-input-wrapper span { flex-grow: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-        .file-input-button { background-color: var(--text-secondary); color: white; border: none; border-radius: 6px; padding: 8px 12px; margin-left: 10px; font-size: 14px; cursor: pointer; }
+        /* Área de Upload */
+        #drop-area { border: 2px dashed var(--border-color); border-radius: 12px; padding: 48px; cursor: pointer; transition: all 0.2s ease; }
+        #drop-area:hover, #drop-area.dragover { border-color: var(--primary-color); background-color: #f0fdfa; }
 
-        .task-options { margin-bottom: 24px; text-align: left; }
-        .task-option { margin-bottom: 12px; display: flex; align-items: center; }
-        .task-option input[type="checkbox"] { margin-right: 10px; transform: scale(1.1); }
+        #file-name { margin-top: 16px; font-weight: 500; color: var(--primary-color); }
+
+        /* Opções de Tarefa */
+        .task-options { margin-top: 24px; text-align: left; }
+        .task-option { padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; }
+        .task-option input[type="checkbox"] { margin-right: 12px; transform: scale(1.2); }
         .task-option label { font-weight: 500; }
-
-        #email-section { margin-top: 24px; text-align: left; display: none; }
-        #email-section label { display: block; margin-bottom: 8px; font-weight: 500; }
-        #email-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; }
-
-        #submit-button { width: 100%; padding: 14px; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; }
+        
+        /* Botão de Processamento */
+        #submit-button { width: 100%; padding: 16px; margin-top: 24px; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; }
         #submit-button:hover:not(:disabled) { background-color: var(--primary-hover); box-shadow: 0 4px 14px rgba(13, 148, 136, 0.3); }
         #submit-button:disabled { background-color: #a5b0b8; cursor: not-allowed; }
 
-        #processing-stage { text-align: center; }
-        #processing-stage .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 24px auto; }
+        /* Status de Processamento */
+        #processing-stage .spinner { width: 48px; height: 48px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 24px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #status-text { font-weight: 500; color: var(--text-secondary); margin-top: 16px; }
+        #status-text { margin-top: 24px; font-weight: 500; color: var(--text-secondary); }
 
+        /* Área de Resultado */
         #result-stage { text-align: left; margin-top: 32px; }
         #result-container { padding: 20px; border: 1px solid var(--border-color); border-radius: 12px; background-color: #f9fafb; font-family: 'Fira Code', monospace; line-height: 1.7; white-space: pre-wrap; font-size: 15px; min-height: 150px; overflow-y: auto; max-height: 500px; }
         
-        .result-section-title { font-size: 18px; font-weight: 700; color: var(--primary-color); margin-bottom: 12px; margin-top: 24px; }
-        .result-section-title:first-child { margin-top: 0; }
-        
+        .result-section { margin-bottom: 24px; } /* Novo wrapper para cada seção de resultado */
+        .result-section-title { font-size: 20px; font-weight: 700; color: var(--primary-color); margin-bottom: 12px; }
+        .result-text-area { width: 100%; min-height: 100px; padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; font-family: 'Fira Code', monospace; line-height: 1.7; resize: vertical; white-space: pre-wrap; background-color: #f9fafb; font-size: 15px; }
+
         .result-actions { margin-top: 24px; display: flex; gap: 12px; }
-        .button { flex-grow: 1; padding: 10px 15px; border-radius: 8px; border: none; font-weight: 500; cursor: pointer; }
+        .button { padding: 10px 15px; border-radius: 8px; border: none; font-weight: 500; cursor: pointer; transition: all 0.2s ease; }
+        .btn-copy { background-color: var(--success-color); color: white; }
         .btn-reset { background-color: var(--text-secondary); color: white; }
 
         .footer { margin-top: 40px; font-size: 14px; color: var(--text-secondary); }
@@ -89,22 +93,20 @@
 
     <div class="container">
         <header class="header">
-            <h1>Processador de Áudio</h1>
-            <p>Selecione seu áudio e as ações que a IA da Labor AI deve executar.</p>
+            <h1>Processador Avançado de Áudio</h1>
+            <p>Envie seu áudio e escolha as ações que a IA da Labor AI deve executar.</p>
         </header>
 
         <!-- ETAPA 1: UPLOAD E CONFIGURAÇÃO -->
         <div id="setup-stage">
-            <div class="file-input-group">
-                <label for="file-input" class="file-input-label">Arquivo de Áudio:</label>
-                <div class="file-input-wrapper">
-                    <input type="file" id="file-input" accept="audio/*">
-                    <span id="selected-file-name">Nenhum arquivo selecionado</span>
-                    <button class="file-input-button" onclick="document.getElementById('file-input').click()">Escolher</button>
-                </div>
+            <input type="file" id="file-input" class="hidden" accept="audio/*">
+            <div id="drop-area">
+                <p>Arraste e solte seu áudio aqui ou clique para selecionar</p>
+                <small>Formatos: MP3, M4A, OGG, WAV, etc.</small>
             </div>
+            <p id="file-name" class="hidden"></p>
 
-            <div id="task-options" class="task-options">
+            <div id="task-options" class="task-options hidden">
                 <h4>Ações Desejadas:</h4>
                 <div class="task-option">
                     <input type="checkbox" id="task-transcribe" name="tasks" value="transcribe" checked>
@@ -112,7 +114,7 @@
                 </div>
                 <div class="task-option">
                     <input type="checkbox" id="task-bullets" name="tasks" value="bullets">
-                    <label for="task-bullets">Gerar Pontos Chave</label>
+                    <label for="task-bullets">Gerar Pontos Chave (Bullet Points)</label>
                 </div>
                 <div class="task-option">
                     <input type="checkbox" id="task-summary" name="tasks" value="summary">
@@ -120,18 +122,13 @@
                 </div>
             </div>
 
-            <div id="email-section" class="hidden">
-                <h4>Seu e-mail (para receber o resumo):</h4>
-                <input type="email" id="email-input" placeholder="seu@email.com">
-            </div>
-
-            <button id="submit-button" disabled>Selecione um arquivo e uma ação</button>
+            <button id="submit-button" disabled>Selecione um arquivo</button>
         </div>
 
         <!-- ETAPA 2: PROCESSANDO -->
         <div id="processing-stage" class="hidden">
             <div class="spinner"></div>
-            <p id="status-text">Processando...</p>
+            <p id="status-text">Iniciando...</p>
         </div>
 
         <!-- ETAPA 3: RESULTADOS -->
@@ -147,17 +144,16 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const webhookUrl = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/a7afa173-d939-46f8-80d7-0e2a9845c928';
+            const webhookUrl = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/a7afa173-d939-46f8-0d7-0e2a9845c928';
 
             // Elementos DOM
             const setupStage = document.getElementById('setup-stage');
             const processingStage = document.getElementById('processing-stage');
             const resultStage = document.getElementById('result-stage');
+            const dropArea = document.getElementById('drop-area');
             const fileInput = document.getElementById('file-input');
-            const selectedFileNameDisplay = document.getElementById('selected-file-name');
+            const fileNameDisplay = document.getElementById('file-name');
             const taskOptions = document.getElementById('task-options');
-            const emailSection = document.getElementById('email-section');
-            const emailInput = document.getElementById('email-input');
             const submitButton = document.getElementById('submit-button');
             const statusText = document.getElementById('status-text');
             const resultContainer = document.getElementById('result-container');
@@ -165,45 +161,36 @@
             
             let selectedFile = null;
 
-            // Lógica de Upload e Seleção
-            fileInput.addEventListener('change', () => {
-                if (fileInput.files.length) {
-                    selectedFile = fileInput.files[0];
-                    selectedFileNameDisplay.textContent = selectedFile.name;
-                    validateForm();
-                } else {
-                    selectedFile = null;
-                    selectedFileNameDisplay.textContent = 'Nenhum arquivo selecionado';
-                    validateForm();
-                }
+            // Lógica de Upload
+            dropArea.addEventListener('click', () => fileInput.click());
+            dropArea.addEventListener('dragover', (e) => { e.preventDefault(); dropArea.classList.add('dragover'); });
+            dropArea.addEventListener('dragleave', () => dropArea.classList.remove('dragover'));
+            dropArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropArea.classList.remove('dragover');
+                if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
             });
-            
-            // Lógica de Seleção de Tarefa
-            document.querySelectorAll('input[name="tasks"]').forEach(checkbox => {
-                checkbox.addEventListener('change', () => {
-                    const isSummaryChecked = document.getElementById('task-summary').checked;
-                    emailSection.classList.toggle('hidden', !isSummaryChecked);
-                    validateForm();
-                });
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length) handleFile(e.target.files[0]);
             });
 
-            emailInput.addEventListener('input', validateForm);
+            function handleFile(file) {
+                selectedFile = file;
+                fileNameDisplay.textContent = `Arquivo selecionado: ${file.name}`;
+                fileNameDisplay.classList.remove('hidden');
+                taskOptions.classList.remove('hidden');
+                validateForm();
+            }
+
+            document.querySelectorAll('input[name="tasks"]').forEach(checkbox => {
+                checkbox.addEventListener('change', validateForm);
+            });
             
             function validateForm() {
                 const selectedTasks = Array.from(document.querySelectorAll('input[name="tasks"]:checked'));
-                const isEmailValid = !document.getElementById('task-summary').checked || (emailInput.value.includes('@') && emailInput.value.length > 5);
-                const canProcess = selectedFile && selectedTasks.length > 0 && isEmailValid;
-                
+                const canProcess = selectedFile && selectedTasks.length > 0;
                 submitButton.disabled = !canProcess;
-                if (!selectedFile) {
-                    submitButton.textContent = 'Selecione um arquivo';
-                } else if (selectedTasks.length === 0) {
-                    submitButton.textContent = 'Escolha pelo menos uma ação';
-                } else if (!isEmailValid) {
-                    submitButton.textContent = 'Informe um e-mail válido';
-                } else {
-                    submitButton.textContent = 'Iniciar Processamento';
-                }
+                submitButton.textContent = canProcess ? 'Iniciar Processamento' : 'Selecione um arquivo e uma ação';
             }
             
             // Lógica de Envio e Processamento
@@ -219,14 +206,10 @@
                 formData.append('audio', selectedFile);
                 formData.append('tasks', JSON.stringify(selectedTasks)); // Envia um JSON string
 
-                if (document.getElementById('task-summary').checked) {
-                    formData.append('userEmail', emailInput.value);
-                }
-
                 try {
                     const response = await fetch(webhookUrl, { method: 'POST', body: formData });
                     statusText.textContent = 'Aguardando a IA processar... (pode levar minutos)';
-                    if (!response.ok) throw new Error(`Erro do servidor: ${response.status}. Por favor, tente novamente.`);
+                    if (!response.ok) throw new Error(`Erro do servidor: ${response.status}`);
                     
                     const results = await response.json(); // Pega a resposta do n8n
                     displayResults(results);
@@ -246,49 +229,59 @@
                 const displayOrder = ["Transcricao_Completa", "Pontos_Chave", "Resumo_Executivo"];
                 
                 displayOrder.forEach(key => {
-                    const contentValue = results[key]; // Pega o valor diretamente do resultado
-                    
-                    if (contentValue) { // Só exibe se o valor existir (não for null, undefined ou string vazia)
-                        const sectionTitle = document.createElement('div');
+                    // Verifica se a chave existe E se o valor não é nulo/vazio
+                    const contentValue = results[key]; 
+                    if (contentValue) { 
+                        const sectionDiv = document.createElement('div');
+                        sectionDiv.className = 'result-section';
+
+                        const sectionTitle = document.createElement('h3');
                         sectionTitle.className = 'result-section-title';
                         
                         const textArea = document.createElement('textarea');
                         textArea.className = 'result-text-area';
                         textArea.readOnly = true;
                         
-                        let sectionText = '';
+                        let textToDisplay = '';
                         let titleText = '';
 
+                        // Extrai o texto real dependendo da estrutura de dados
                         if (key === "Transcricao_Completa") {
                             titleText = "Transcrição Completa";
-                            sectionText = formatTranscription(contentValue); // Formata transcrição
+                            textToDisplay = contentValue; 
                         } else if (key === "Pontos_Chave") {
                             titleText = "Pontos Chave";
-                            sectionText = contentValue; 
+                            // Tenta pegar de .content, se não, usa o valor direto (compatibilidade)
+                            textToDisplay = contentValue.content || contentValue; 
                         } else if (key === "Resumo_Executivo") {
                             titleText = "Resumo Executivo";
-                            sectionText = contentValue;
+                            // Tenta pegar de .content, se não, usa o valor direto (compatibilidade)
+                            textToDisplay = contentValue.content || contentValue;
+                        }
+
+                        // Formatação final da transcrição (se for o caso)
+                        if (key === "Transcricao_Completa") {
+                            textArea.value = formatTranscription(textToDisplay);
+                        } else {
+                            textArea.value = textToDisplay;
                         }
 
                         sectionTitle.textContent = titleText;
-                        textArea.value = sectionText;
-
-                        // Adiciona a seção ao container
-                        const sectionDiv = document.createElement('div');
                         sectionDiv.appendChild(sectionTitle);
                         sectionDiv.appendChild(textArea);
-                        resultContainer.appendChild(sectionDiv);
                         
-                        // Adiciona botão Copiar para cada seção
+                        // Adiciona botão Copiar
                         const copyButton = document.createElement('button');
-                        copyButton.className = 'button';
+                        copyButton.className = 'button btn-copy';
                         copyButton.textContent = 'Copiar';
                         copyButton.onclick = () => {
                             navigator.clipboard.writeText(textArea.value);
                             copyButton.textContent = 'Copiado!';
                             setTimeout(() => { copyButton.textContent = 'Copiar'; }, 2000);
                         };
-                        sectionDiv.appendChild(copyButton); // Adiciona o botão de copiar a cada seção
+                        sectionDiv.appendChild(copyButton); 
+
+                        resultContainer.appendChild(sectionDiv);
                     }
                 });
 
@@ -306,14 +299,12 @@
             const resetUI = () => {
                 selectedFile = null;
                 fileInput.value = '';
-                selectedFileNameDisplay.textContent = 'Nenhum arquivo selecionado';
-                taskOptions.classList.remove('hidden');
-                emailSection.classList.add('hidden'); // Esconde email
-                emailInput.value = ''; // Limpa email
+                fileNameDisplay.classList.add('hidden');
+                taskOptions.classList.add('hidden');
                 setupStage.classList.remove('hidden');
                 processingStage.classList.add('hidden');
                 resultStage.classList.add('hidden');
-                resultContainer.innerHTML = '';
+                resultContainer.innerHTML = ''; 
                 document.querySelectorAll('input[name="tasks"]').forEach(cb => {
                     cb.checked = (cb.id === 'task-transcribe'); // Marca "Transcrição Completa" por padrão
                 });

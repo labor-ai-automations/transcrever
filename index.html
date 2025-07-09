@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Processador Avançado de Áudio | Labor AI</title>
+    <title>Labor AI - Transcritor Simples</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Fira+Code&display=swap" rel="stylesheet">
     
     <style>
@@ -42,35 +42,31 @@
             padding: 40px;
         }
 
-        .header h1 { font-size: 32px; font-weight: 700; }
-        .header p { font-size: 18px; color: var(--text-secondary); margin-top: 8px; margin-bottom: 32px; }
+        .header h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        .header p { font-size: 18px; color: var(--text-secondary); margin-bottom: 32px; }
 
         #drop-area { border: 2px dashed var(--border-color); border-radius: 12px; padding: 48px; cursor: pointer; transition: all 0.2s ease; }
         #drop-area:hover, #drop-area.dragover { border-color: var(--primary-color); background-color: #f0fdfa; }
 
         #file-name { margin-top: 16px; font-weight: 500; color: var(--primary-color); }
 
-        .task-options { margin-top: 24px; text-align: left; }
         .task-option { padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; }
         .task-option input[type="checkbox"] { margin-right: 12px; transform: scale(1.2); }
+        .task-option label { flex-grow: 1; text-align: left; }
         .task-option.selected { border-color: var(--primary-color); background-color: #f0fdfa; }
         
-        #process-button { width: 100%; padding: 16px; margin-top: 24px; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; }
-        #process-button:disabled { background-color: #a5b0b8; cursor: not-allowed; }
+        #submit-button { width: 100%; padding: 16px; margin-top: 24px; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; }
+        #submit-button:disabled { background-color: #a5b0b8; cursor: not-allowed; }
 
         #processing-stage .spinner { width: 48px; height: 48px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 24px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         #status-text { margin-top: 24px; font-weight: 500; color: var(--text-secondary); }
 
-        #result-stage { text-align: left; }
-        .tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 24px; }
-        .tab { padding: 12px 20px; cursor: pointer; border-bottom: 3px solid transparent; color: var(--text-secondary); }
-        .tab.active { border-bottom-color: var(--primary-color); color: var(--primary-color); font-weight: 700; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
-        .result-text-area { width: 100%; height: 350px; padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; font-family: 'Fira Code', monospace; line-height: 1.7; resize: vertical; white-space: pre-wrap; background-color: #f9fafb; }
-        .result-actions { margin-top: 16px; display: flex; gap: 16px; }
+        #result-stage { text-align: left; margin-top: 32px; }
+        #result-container { padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; background-color: #f9fafb; font-family: 'Fira Code', monospace; line-height: 1.7; white-space: pre-wrap; font-size: 15px; }
+        .result-section-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; color: var(--primary-color); }
+        .result-section-content { margin-bottom: 24px; }
+        .result-actions { margin-top: 24px; display: flex; gap: 16px; }
 
         .footer { margin-top: 40px; font-size: 14px; color: var(--text-secondary); }
         .hidden { display: none; }
@@ -80,7 +76,7 @@
 
     <div class="container">
         <header class="header">
-            <h1>Processador Avançado de Áudio</h1>
+            <h1>Transcritor Inteligente</h1>
             <p>Envie seu áudio e escolha as ações que a IA da Labor AI deve executar.</p>
         </header>
 
@@ -95,21 +91,21 @@
 
             <div id="task-options" class="task-options hidden">
                 <h4>Ações Desejadas:</h4>
-                <div class="task-option">
+                <div class="task-option" data-task="transcribe">
                     <input type="checkbox" id="task-transcribe" name="tasks" value="transcribe" checked>
                     <label for="task-transcribe">Transcrição Completa</label>
                 </div>
-                <div class="task-option">
+                <div class="task-option" data-task="bullets">
                     <input type="checkbox" id="task-bullets" name="tasks" value="bullets">
                     <label for="task-bullets">Gerar Pontos Chave (Bullet Points)</label>
                 </div>
-                <div class="task-option">
+                <div class="task-option" data-task="summary">
                     <input type="checkbox" id="task-summary" name="tasks" value="summary">
                     <label for="task-summary">Criar Resumo Executivo</label>
                 </div>
             </div>
 
-            <button id="process-button" disabled>Selecione um arquivo</button>
+            <button id="submit-button" disabled>Selecione um arquivo</button>
         </div>
 
         <!-- ETAPA 2: PROCESSANDO -->
@@ -118,11 +114,9 @@
             <p id="status-text">Iniciando...</p>
         </div>
 
-        <!-- ETAPA 3: RESULTADO -->
+        <!-- ETAPA 3: RESULTADOS -->
         <div id="result-stage" class="hidden">
-            <h3>Resultados do Processamento</h3>
-            <div class="tabs" id="result-tabs"></div>
-            <div id="result-contents"></div>
+            <div id="result-container"></div>
             <div class="result-actions">
                 <button id="reset-button">Processar Outro</button>
             </div>
@@ -133,8 +127,9 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const webhookUrl = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/a7afa173-d939-46f8-80d7-0e2a9845c928';
+            const webhookUrl = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/a7afa173-d939-46f8-0d7-0e2a9845c928';
 
+            // Elementos DOM
             const setupStage = document.getElementById('setup-stage');
             const processingStage = document.getElementById('processing-stage');
             const resultStage = document.getElementById('result-stage');
@@ -142,10 +137,9 @@
             const fileInput = document.getElementById('file-input');
             const fileNameDisplay = document.getElementById('file-name');
             const taskOptions = document.getElementById('task-options');
-            const processButton = document.getElementById('process-button');
+            const submitButton = document.getElementById('submit-button');
             const statusText = document.getElementById('status-text');
-            const resultTabs = document.getElementById('result-tabs');
-            const resultContents = document.getElementById('result-contents');
+            const resultContainer = document.getElementById('result-container');
             const resetButton = document.getElementById('reset-button');
             
             let selectedFile = null;
@@ -178,12 +172,12 @@
             function validateForm() {
                 const selectedTasks = Array.from(document.querySelectorAll('input[name="tasks"]:checked'));
                 const canProcess = selectedFile && selectedTasks.length > 0;
-                processButton.disabled = !canProcess;
-                processButton.textContent = canProcess ? 'Iniciar Processamento' : 'Selecione um arquivo e uma ação';
+                submitButton.disabled = !canProcess;
+                submitButton.textContent = canProcess ? 'Iniciar Processamento' : 'Selecione um arquivo e uma ação';
             }
             
-            // Lógica de Envio
-            processButton.addEventListener('click', async () => {
+            // Lógica de Envio e Processamento
+            submitButton.addEventListener('click', async () => {
                 if (!selectedFile) return;
 
                 setupStage.classList.add('hidden');
@@ -193,14 +187,14 @@
                 const selectedTasks = Array.from(document.querySelectorAll('input[name="tasks"]:checked')).map(cb => cb.value);
                 const formData = new FormData();
                 formData.append('audio', selectedFile);
-                formData.append('tasks', JSON.stringify(selectedTasks));
+                formData.append('tasks', JSON.stringify(selectedTasks)); // Envia um JSON string
 
                 try {
                     const response = await fetch(webhookUrl, { method: 'POST', body: formData });
                     statusText.textContent = 'Aguardando a IA processar... (pode levar minutos)';
                     if (!response.ok) throw new Error(`Erro do servidor: ${response.status}`);
                     
-                    const results = await response.json();
+                    const results = await response.json(); // Pega a resposta do n8n
                     displayResults(results);
 
                 } catch (error) {
@@ -213,69 +207,64 @@
             function displayResults(results) {
                 processingStage.classList.add('hidden');
                 resultStage.classList.remove('hidden');
-                resultTabs.innerHTML = '';
-                resultContents.innerHTML = '';
-                
-                const friendlyNames = {
-                    "Transcricao_Completa": "Transcrição Completa",
-                    "Pontos_Chave": "Pontos Chave",
-                    "Resumo_Executivo": "Resumo Executivo"
-                };
+                resultContainer.innerHTML = ''; // Limpa resultados anteriores
 
                 const displayOrder = ["Transcricao_Completa", "Pontos_Chave", "Resumo_Executivo"];
-
-                displayOrder.forEach(key => {
-                    if (results[key]) { // Só cria a aba se houver conteúdo
-                        const tab = document.createElement('div');
-                        tab.className = 'tab';
-                        tab.textContent = friendlyNames[key] || key;
-                        tab.dataset.tab = key;
-                        resultTabs.appendChild(tab);
-
-                        const content = document.createElement('div');
-                        content.className = 'tab-content';
-                        content.id = `content-${key}`;
-                        const textArea = document.createElement('textarea');
-                        textArea.className = 'result-text-area';
-                        textArea.readOnly = true;
-                        
-                        // A CORREÇÃO ESTÁ AQUI
-                        // Verifica se o resultado é um objeto com 'content' (do OpenAI) ou uma string direta
-                        if (typeof results[key] === 'object' && results[key] !== null && results[key].content) {
-                            textArea.value = results[key].content;
-                        } else if (typeof results[key] === 'string') {
-                            textArea.value = results[key];
-                        } else {
-                            textArea.value = "Nenhum resultado disponível para esta tarefa.";
-                        }
-                        
-                        content.appendChild(textArea);
-                        resultContents.appendChild(content);
-                    }
-                });
                 
-                // Ativa a primeira aba e conteúdo
-                if (resultTabs.firstChild) {
-                    resultTabs.firstChild.classList.add('active');
-                }
-                if (resultContents.firstChild) {
-                    resultContents.firstChild.classList.add('active');
-                }
+                displayOrder.forEach(key => {
+                    const contentValue = results[key]; // Pega o valor diretamente do resultado
 
-                resultTabs.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('tab')) {
-                        const tabKey = e.target.dataset.tab;
-                        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                        e.target.classList.add('active');
-                        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                        document.getElementById(`content-${tabKey}`).classList.add('active');
+                    if (contentValue) { // Só exibe se o valor existir (não for null ou undefined)
+                        const sectionTitle = document.createElement('h3');
+                        sectionTitle.className = 'result-section-title';
+                        
+                        let sectionText = '';
+
+                        // Verifica o tipo de conteúdo para exibir corretamente
+                        if (key === "Transcricao_Completa") {
+                            sectionTitle.textContent = "Transcrição Completa";
+                            sectionText = formatTranscription(contentValue); // Formata transcrição
+                        } else if (key === "Pontos_Chave") {
+                            sectionTitle.textContent = "Pontos Chave";
+                            sectionText = contentValue; // O texto já vem formatado da IA
+                        } else if (key === "Resumo_Executivo") {
+                            sectionTitle.textContent = "Resumo Executivo";
+                            sectionText = contentValue; // O texto já vem formatado da IA
+                        }
+
+                        if (sectionText) { // Garante que há texto para exibir
+                            const contentDiv = document.createElement('div');
+                            contentDiv.className = 'result-section-content';
+                            contentDiv.innerHTML = `
+                                <div class="result-section-title">${sectionTitle.textContent}</div>
+                                <textarea class="result-text-area" readonly>${sectionText}</textarea>
+                                <button class="button btn-copy" onclick="copyText(this)">Copiar</button>
+                            `;
+                            resultContainer.appendChild(contentDiv);
+                        }
                     }
                 });
+
+                if (resultContainer.innerHTML === '') {
+                    resultContainer.innerHTML = '<p>Nenhum resultado foi gerado para as tarefas selecionadas.</p>';
+                }
             }
 
-            resetButton.addEventListener('click', resetUI);
+            // Funções de Utilitário
+            function formatTranscription(text) {
+                if (!text) return '';
+                // Adiciona quebra de linha dupla após pontuação final, se seguida por espaço e letra maiúscula.
+                return text.replace(/([.!?])\s+(?=[A-ZÀ-Ú])/g, '$1\n\n');
+            }
 
-            function resetUI() {
+            function copyText(buttonElement) {
+                const textArea = buttonElement.previousElementSibling;
+                navigator.clipboard.writeText(textArea.value);
+                buttonElement.textContent = 'Copiado!';
+                setTimeout(() => { buttonElement.textContent = 'Copiar'; }, 2000);
+            }
+
+            const resetUI = () => {
                 selectedFile = null;
                 fileInput.value = '';
                 fileNameDisplay.classList.add('hidden');
@@ -283,11 +272,14 @@
                 setupStage.classList.remove('hidden');
                 processingStage.classList.add('hidden');
                 resultStage.classList.add('hidden');
+                resultContainer.innerHTML = ''; // Limpa resultados anteriores
                 document.querySelectorAll('input[name="tasks"]').forEach(cb => {
                     cb.checked = (cb.id === 'task-transcribe'); // Marca "Transcrição Completa" por padrão
                 });
                 validateForm();
-            }
+            };
+
+            resetButton.addEventListener('click', resetUI);
         });
     </script>
 </body>

@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Processador Avançado de Áudio | Labor AI</title>
-    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Fira+Code&display=swap" rel="stylesheet">
     
     <style>
@@ -49,11 +48,13 @@
         #drop-area { border: 2px dashed var(--border-color); border-radius: 12px; padding: 48px; cursor: pointer; transition: all 0.2s ease; }
         #drop-area:hover, #drop-area.dragover { border-color: var(--primary-color); background-color: #f0fdfa; }
 
+        #file-name { margin-top: 16px; font-weight: 500; color: var(--primary-color); }
+
         .task-options { margin-top: 24px; text-align: left; }
         .task-option { padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; }
         .task-option input[type="checkbox"] { margin-right: 12px; transform: scale(1.2); }
         .task-option.selected { border-color: var(--primary-color); background-color: #f0fdfa; }
-
+        
         #process-button { width: 100%; padding: 16px; margin-top: 24px; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; }
         #process-button:disabled { background-color: #a5b0b8; cursor: not-allowed; }
 
@@ -159,7 +160,7 @@
                 if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
             });
             fileInput.addEventListener('change', () => {
-                if (fileInput.files.length) handleFile(fileInput.files[0]);
+                if (fileInput.files.length) handleFile(e.target.files[0]);
             });
 
             function handleFile(file) {
@@ -224,7 +225,7 @@
                 const displayOrder = ["Transcricao_Completa", "Pontos_Chave", "Resumo_Executivo"];
 
                 displayOrder.forEach(key => {
-                    if (results[key]) {
+                    if (results[key]) { // Só cria a aba se houver conteúdo
                         const tab = document.createElement('div');
                         tab.className = 'tab';
                         tab.textContent = friendlyNames[key] || key;
@@ -237,12 +238,23 @@
                         const textArea = document.createElement('textarea');
                         textArea.className = 'result-text-area';
                         textArea.readOnly = true;
-                        textArea.value = results[key];
+                        
+                        // A CORREÇÃO ESTÁ AQUI
+                        // Verifica se o resultado é um objeto com 'content' (do OpenAI) ou uma string direta
+                        if (typeof results[key] === 'object' && results[key] !== null && results[key].content) {
+                            textArea.value = results[key].content;
+                        } else if (typeof results[key] === 'string') {
+                            textArea.value = results[key];
+                        } else {
+                            textArea.value = "Nenhum resultado disponível para esta tarefa.";
+                        }
+                        
                         content.appendChild(textArea);
                         resultContents.appendChild(content);
                     }
                 });
                 
+                // Ativa a primeira aba e conteúdo
                 if (resultTabs.firstChild) {
                     resultTabs.firstChild.classList.add('active');
                 }
@@ -272,7 +284,7 @@
                 processingStage.classList.add('hidden');
                 resultStage.classList.add('hidden');
                 document.querySelectorAll('input[name="tasks"]').forEach(cb => {
-                    cb.checked = (cb.id === 'task-transcribe');
+                    cb.checked = (cb.id === 'task-transcribe'); // Marca "Transcrição Completa" por padrão
                 });
                 validateForm();
             }

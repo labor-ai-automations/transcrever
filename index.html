@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Fira+Code&display=swap" rel="stylesheet">
     
     <style>
-        /* Variáveis CSS */
         :root {
             --primary-color: #0d9488;
             --primary-hover: #0f766e;
@@ -19,10 +18,8 @@
             --success-color: #16a34a;
         }
 
-        /* Reset Básico */
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        /* Estilos do Body */
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--background-color);
@@ -35,7 +32,6 @@
             padding: 20px;
         }
 
-        /* Container Principal */
         .container {
             background-color: var(--card-bg);
             border-radius: 16px;
@@ -46,44 +42,36 @@
             padding: 40px;
         }
 
-        /* Cabeçalho */
         .header h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
         .header p { font-size: 18px; color: var(--text-secondary); margin-bottom: 32px; }
 
-        /* Área de Upload */
         #drop-area { border: 2px dashed var(--border-color); border-radius: 12px; padding: 48px; cursor: pointer; transition: all 0.2s ease; }
         #drop-area:hover, #drop-area.dragover { border-color: var(--primary-color); background-color: #f0fdfa; }
 
         #file-name { margin-top: 16px; font-weight: 500; color: var(--primary-color); }
 
-        /* Opções de Tarefa */
         .task-options { margin-top: 24px; text-align: left; }
         .task-option { padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; }
         .task-option input[type="checkbox"] { margin-right: 12px; transform: scale(1.2); }
-        .task-option label { font-weight: 500; }
+        .task-option.selected { border-color: var(--primary-color); background-color: #f0fdfa; }
         
-        /* Botão de Processamento */
         #submit-button { width: 100%; padding: 16px; margin-top: 24px; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; }
         #submit-button:hover:not(:disabled) { background-color: var(--primary-hover); box-shadow: 0 4px 14px rgba(13, 148, 136, 0.3); }
         #submit-button:disabled { background-color: #a5b0b8; cursor: not-allowed; }
 
-        /* Status de Processamento */
         #processing-stage .spinner { width: 48px; height: 48px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 24px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         #status-text { margin-top: 24px; font-weight: 500; color: var(--text-secondary); }
 
-        /* Área de Resultado */
         #result-stage { text-align: left; margin-top: 32px; }
-        #result-container { padding: 20px; border: 1px solid var(--border-color); border-radius: 12px; background-color: #f9fafb; font-family: 'Fira Code', monospace; line-height: 1.7; white-space: pre-wrap; font-size: 15px; min-height: 150px; overflow-y: auto; max-height: 500px; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 24px; }
+        .tab { padding: 12px 20px; cursor: pointer; border-bottom: 3px solid transparent; color: var(--text-secondary); }
+        .tab.active { border-bottom-color: var(--primary-color); color: var(--primary-color); font-weight: 700; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
         
-        .result-section { margin-bottom: 24px; } /* Novo wrapper para cada seção de resultado */
-        .result-section-title { font-size: 20px; font-weight: 700; color: var(--primary-color); margin-bottom: 12px; }
-        .result-text-area { width: 100%; min-height: 100px; padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; font-family: 'Fira Code', monospace; line-height: 1.7; resize: vertical; white-space: pre-wrap; background-color: #f9fafb; font-size: 15px; }
-
-        .result-actions { margin-top: 24px; display: flex; gap: 12px; }
-        .button { padding: 10px 15px; border-radius: 8px; border: none; font-weight: 500; cursor: pointer; transition: all 0.2s ease; }
-        .btn-copy { background-color: var(--success-color); color: white; }
-        .btn-reset { background-color: var(--text-secondary); color: white; }
+        .result-text-area { width: 100%; height: 350px; padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; font-family: 'Fira Code', monospace; line-height: 1.7; resize: vertical; white-space: pre-wrap; background-color: #f9fafb; font-size: 15px; }
+        .result-actions { margin-top: 16px; display: flex; gap: 16px; }
 
         .footer { margin-top: 40px; font-size: 14px; color: var(--text-secondary); }
         .hidden { display: none; }
@@ -133,9 +121,11 @@
 
         <!-- ETAPA 3: RESULTADOS -->
         <div id="result-stage" class="hidden">
-            <div id="result-container"></div>
+            <h3>Resultados do Processamento</h3>
+            <div class="tabs" id="result-tabs"></div>
+            <div id="result-contents"></div>
             <div class="result-actions">
-                <button id="reset-button" class="button btn-reset">Processar Outro</button>
+                <button id="reset-button">Processar Outro</button>
             </div>
         </div>
     </div>
@@ -144,7 +134,12 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const webhookUrl = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/a7afa173-d939-46f8-0d7-0e2a9845c928';
+            // !!! URLs dos seus Webhooks N8n (Copie e cole aqui) !!!
+            const webhookUrls = {
+                transcribe: 'https://n8n-n8n.znxk1t.easypanel.host/webhook/e4d3d730-b7be-454f-9dc7-01e0bd489b5d', // Webhook para Transcrição
+                bullets: 'https://n8n-n8n.znxk1t.easypanel.host/webhook/6a7bf6d2-0f43-4451-9123-d749348d1558',  // Webhook para Bullet Points
+                summary: 'https://n8n-n8n.znxk1t.easypanel.host/webhook/3833d759-c6f8-4dc0-8b11-b6ee98e30a9a'   // Webhook para Resumo
+            };
 
             // Elementos DOM
             const setupStage = document.getElementById('setup-stage');
@@ -156,7 +151,8 @@
             const taskOptions = document.getElementById('task-options');
             const submitButton = document.getElementById('submit-button');
             const statusText = document.getElementById('status-text');
-            const resultContainer = document.getElementById('result-container');
+            const resultTabs = document.getElementById('result-tabs');
+            const resultContents = document.getElementById('result-contents');
             const resetButton = document.getElementById('reset-button');
             
             let selectedFile = null;
@@ -199,19 +195,33 @@
 
                 setupStage.classList.add('hidden');
                 processingStage.classList.remove('hidden');
-                statusText.textContent = 'Enviando arquivo para o servidor...';
+                statusText.textContent = 'Enviando arquivo(s) para processamento...';
 
                 const selectedTasks = Array.from(document.querySelectorAll('input[name="tasks"]:checked')).map(cb => cb.value);
-                const formData = new FormData();
-                formData.append('audio', selectedFile);
-                formData.append('tasks', JSON.stringify(selectedTasks)); // Envia um JSON string
+                const results = {}; // Objeto para armazenar todos os resultados
 
                 try {
-                    const response = await fetch(webhookUrl, { method: 'POST', body: formData });
-                    statusText.textContent = 'Aguardando a IA processar... (pode levar minutos)';
-                    if (!response.ok) throw new Error(`Erro do servidor: ${response.status}`);
+                    for (const task of selectedTasks) {
+                        const formData = new FormData();
+                        formData.append('audio', selectedFile);
+
+                        statusText.textContent = `Processando: ${getTaskFriendlyName(task)}...`;
+
+                        const response = await fetch(webhookUrls[task], { method: 'POST', body: formData });
+                        if (!response.ok) throw new Error(`Erro no servidor para "${getTaskFriendlyName(task)}": ${response.status}`);
+                        
+                        const taskResult = await response.json();
+                        
+                        // Armazena o resultado no objeto 'results'
+                        if (task === 'transcribe') {
+                            results.Transcricao_Completa = taskResult.transcricao;
+                        } else if (task === 'bullets') {
+                            results.Pontos_Chave = taskResult.pontos_chave;
+                        } else if (task === 'summary') {
+                            results.Resumo_Executivo = taskResult.resumo_executivo;
+                        }
+                    }
                     
-                    const results = await response.json(); // Pega a resposta do n8n
                     displayResults(results);
 
                 } catch (error) {
@@ -226,11 +236,17 @@
                 resultStage.classList.remove('hidden');
                 resultContainer.innerHTML = ''; // Limpa resultados anteriores
                 
+                const friendlyNames = {
+                    "Transcricao_Completa": "Transcrição Completa",
+                    "Pontos_Chave": "Pontos Chave",
+                    "Resumo_Executivo": "Resumo Executivo"
+                };
+
                 const displayOrder = ["Transcricao_Completa", "Pontos_Chave", "Resumo_Executivo"];
-                
+
                 displayOrder.forEach(key => {
-                    // Verifica se a chave existe E se o valor não é nulo/vazio
                     const contentValue = results[key]; 
+
                     if (contentValue) { 
                         const sectionDiv = document.createElement('div');
                         sectionDiv.className = 'result-section';
@@ -245,34 +261,25 @@
                         let textToDisplay = '';
                         let titleText = '';
 
-                        // Extrai o texto real dependendo da estrutura de dados
                         if (key === "Transcricao_Completa") {
                             titleText = "Transcrição Completa";
-                            textToDisplay = contentValue; 
+                            textToDisplay = formatTranscription(contentValue); 
                         } else if (key === "Pontos_Chave") {
                             titleText = "Pontos Chave";
-                            // Tenta pegar de .content, se não, usa o valor direto (compatibilidade)
-                            textToDisplay = contentValue.content || contentValue; 
+                            textToDisplay = contentValue; // O texto já vem formatado da IA
                         } else if (key === "Resumo_Executivo") {
                             titleText = "Resumo Executivo";
-                            // Tenta pegar de .content, se não, usa o valor direto (compatibilidade)
-                            textToDisplay = contentValue.content || contentValue;
-                        }
-
-                        // Formatação final da transcrição (se for o caso)
-                        if (key === "Transcricao_Completa") {
-                            textArea.value = formatTranscription(textToDisplay);
-                        } else {
-                            textArea.value = textToDisplay;
+                            textToDisplay = contentValue;
                         }
 
                         sectionTitle.textContent = titleText;
+                        textArea.value = textToDisplay;
+
                         sectionDiv.appendChild(sectionTitle);
                         sectionDiv.appendChild(textArea);
                         
-                        // Adiciona botão Copiar
                         const copyButton = document.createElement('button');
-                        copyButton.className = 'button btn-copy';
+                        copyButton.className = 'button'; // Reutiliza estilo de botão existente
                         copyButton.textContent = 'Copiar';
                         copyButton.onclick = () => {
                             navigator.clipboard.writeText(textArea.value);
@@ -291,6 +298,15 @@
             }
 
             // Funções Auxiliares
+            function getTaskFriendlyName(taskKey) {
+                switch (taskKey) {
+                    case 'transcribe': return 'Transcrição Completa';
+                    case 'bullets': return 'Pontos Chave';
+                    case 'summary': return 'Resumo Executivo';
+                    default: return taskKey;
+                }
+            }
+
             function formatTranscription(text) {
                 if (!text) return '';
                 return text.replace(/([.!?])\s+(?=[A-ZÀ-Ú])/g, '$1\n\n');
@@ -299,8 +315,8 @@
             const resetUI = () => {
                 selectedFile = null;
                 fileInput.value = '';
-                fileNameDisplay.classList.add('hidden');
-                taskOptions.classList.add('hidden');
+                selectedFileNameDisplay.textContent = 'Nenhum arquivo selecionado';
+                taskOptions.classList.remove('hidden'); // Garante que opções de tarefa apareçam novamente
                 setupStage.classList.remove('hidden');
                 processingStage.classList.add('hidden');
                 resultStage.classList.add('hidden');
